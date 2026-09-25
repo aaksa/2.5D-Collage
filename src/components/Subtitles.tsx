@@ -45,8 +45,19 @@ const Word: React.FC<{
   outAt: number; // frame
   duration?: number;
   style?: React.CSSProperties;
+  // Which side carries the word gap. Right-aligned lines put it on the
+  // left, so nothing trails past the margin.
+  space?: "left" | "right" | "none";
   children: string;
-}> = ({ frame, inAt, outAt, duration = 30, style, children }) => {
+}> = ({
+  frame,
+  inAt,
+  outAt,
+  duration = 30,
+  style,
+  space = "right",
+  children,
+}) => {
   const rise = glide(
     interpolate(frame, [inAt, inAt + duration], [0, 1], clamp),
   );
@@ -65,7 +76,8 @@ const Word: React.FC<{
         verticalAlign: "bottom",
         paddingBottom: "0.12em",
         marginBottom: "-0.12em",
-        marginRight: "0.26em",
+        marginLeft: space === "left" ? "0.26em" : 0,
+        marginRight: space === "right" ? "0.26em" : 0,
       }}
     >
       <span
@@ -141,9 +153,10 @@ export const Subtitles: React.FC<{
             key={`${cue.start}-${cue.text}`}
             style={{
               position: "absolute",
-              left: 1100,
+              right: 120,
               bottom: 116,
-              maxWidth: 720,
+              maxWidth: 760,
+              textAlign: "right",
             }}
           >
             <div
@@ -156,13 +169,26 @@ export const Subtitles: React.FC<{
                 marginBottom: 22,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "flex-end",
               }}
             >
-              <Word frame={frame} inAt={inAt - 8} outAt={outAt} duration={26}>
+              <Word
+                frame={frame}
+                inAt={inAt - 8}
+                outAt={outAt}
+                duration={26}
+                space="none"
+              >
                 {String(index + 1).padStart(2, "0")}
               </Word>
               <Rule frame={frame} inAt={inAt - 4} outAt={outAt} width={64} />
-              <Word frame={frame} inAt={inAt} outAt={outAt} duration={26}>
+              <Word
+                frame={frame}
+                inAt={inAt}
+                outAt={outAt}
+                duration={26}
+                space="none"
+              >
                 {String(cues.length).padStart(2, "0")}
               </Word>
             </div>
@@ -195,6 +221,7 @@ export const Subtitles: React.FC<{
                     inAt={at}
                     outAt={outAt + i * 1.5}
                     duration={tone ? 32 : 30}
+                    space={i === 0 ? "none" : "left"}
                     style={
                       tone
                         ? {
@@ -238,10 +265,11 @@ export const ChapterMarks: React.FC<{
             key={c.numeral}
             style={{
               position: "absolute",
-              left: 1100,
+              right: 120,
               top: 92,
               display: "flex",
               alignItems: "center",
+              justifyContent: "flex-end",
               color: "rgba(244,241,234,0.78)",
             }}
           >
@@ -250,6 +278,7 @@ export const ChapterMarks: React.FC<{
               inAt={inAt}
               outAt={outAt}
               duration={40}
+              space="none"
               style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 40 }}
             >
               {c.numeral}
@@ -271,6 +300,7 @@ export const ChapterMarks: React.FC<{
                   inAt={inAt + 14 + i * 3}
                   outAt={outAt}
                   duration={30}
+                  space={i === 0 ? "none" : "left"}
                 >
                   {w}
                 </Word>

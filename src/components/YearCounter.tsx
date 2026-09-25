@@ -46,8 +46,11 @@ export const YearCounter: React.FC<{
       <div
         style={{
           position: "absolute",
-          left: 1110,
+          right: 120,
           top: 210,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
           opacity: (1 - leave) * Math.min(1, enter * 1.4),
           transform: `translateY(${(1 - enter) * 40 - leave * 26}px)`,
           filter: `blur(${leave * 4}px)`,
@@ -113,7 +116,7 @@ export const YearCounter: React.FC<{
         <div
           style={{
             marginTop: 18,
-            marginLeft: 8,
+            marginRight: 8,
             width: 420,
             height: 1,
             background: "rgba(244,241,234,0.22)",
