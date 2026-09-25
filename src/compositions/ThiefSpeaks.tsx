@@ -37,7 +37,6 @@ import {
   FACE_AT,
   STORY_DURATION,
   THIEF_LINE_AT,
-  debtPile,
   storyCards,
 } from "../data/story";
 
@@ -131,7 +130,7 @@ const useAssets = () => {
   useEffect(() => {
     const srcs = [
       ...new Set([
-        ...[...storyCards, ...debtPile].flatMap((c) => (c.src ? [c.src] : [])),
+        ...storyCards.flatMap((c) => (c.src ? [c.src] : [])),
         PATH_TEXTURE,
       ]),
     ];

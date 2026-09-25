@@ -11,20 +11,20 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **The photo lane.** The photos float in a lane on the rat's left and
-  travel exactly like the paving slabs: they appear far ahead of him along
-  the path and glide back past him towards the lens at his walking pace.
-  They keep their colour and each has its own cut (arch, porthole, hexagon,
-  ticket, wedge, chevron, notched print and more). Each is featured
-  (larger, brighter, sharper) on its line. The right of frame holds the type.
+- **The photo lane.** One framed photograph per line floats in on the rat's
+  left, travelling with the paving: it arrives from ahead, rests beside him
+  while its words are spoken, then drifts back and away. Photos alternate
+  between a low and a high row so they never pile up. Each keeps its colour
+  and sits in its own paper frame shape (arch, hexagon, porthole, wedge,
+  ticket...). Act II shows decay in the photographs themselves (drained,
+  muddied, darkened); the bridge on "roboh" slowly tilts and sinks away.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
 - **A soft blackout** on the silence at 26 s.
-- **Act II (26.5-44 s):** the same places come back aged: the mountain
-  burnt bare, the river muddied, ledger pages flooding the ring, buildings
-  and the road cracking, the path breaking up, the bridge splitting and
-  falling.
+- **Act II (26.5-44 s):** what came after: bare hills, a muddied river, a
+  ledger page of debt, crowded blocks, a broken road, a sinking bridge, while
+  the path itself breaks up under him.
 - **Ending (45 s-):** the camera swings round to the rat's face for "Now the
   Thief Speaks Our Tongue".
 - **Typography.** Each caption is introduced by an index and a drawn rule;

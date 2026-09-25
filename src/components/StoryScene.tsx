@@ -7,7 +7,6 @@ import {
   HEADING,
   STORY_DURATION,
   StoryCardSpec,
-  debtPile,
   lane,
   storyCards,
 } from "../data/story";
@@ -68,10 +67,7 @@ export const StoryScene: React.FC<{
     lane.speed = perSecond;
     return perSecond;
   }, [model]);
-  const cards = useMemo<StoryCardSpec[]>(
-    () => [...storyCards, ...debtPile],
-    [],
-  );
+  const cards = useMemo<StoryCardSpec[]>(() => storyCards, []);
 
   return (
     <>
