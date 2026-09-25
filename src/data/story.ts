@@ -62,7 +62,15 @@ const CAMERA_HOME = new Vector3(0, 1.15, 5.8);
 // One stream. Every photo follows the same line: from far down the path,
 // above and a little right of its far end, to its place beside him on the
 // left. ("low" and "high" are kept as names for the story list below.)
-const STREAM = { lateral: 2.8, height: 0.75, farLateral: -0.7, farHeight: 1.7 };
+const STREAM = {
+  lateral: 2.8,
+  height: 0.75,
+  farLateral: -1.9,
+  farHeight: 2.9,
+};
+// Distance over which the stream climbs from beside him to its far end: a
+// long diagonal across the frame, so the queue reads as a line to follow.
+const STREAM_REACH = 11;
 const ROWS = { low: STREAM, high: STREAM };
 
 // A photo first appears far down the path, like the far end of the paving,
@@ -70,9 +78,8 @@ const ROWS = { low: STREAM, high: STREAM };
 // selected and resized up to full size from its corner, so it arrives big;
 // it is selected again while its line is spoken, then travels on past him.
 const FAR = 34; // how far ahead it appears, in world units along the path
-const STRETCH = 3.5; // seconds: how quickly the stream opens out with distance
-const RESIZE_AT = 6.5; // world units ahead of him where it snaps to size
-const RESIZE_SPAN = 0.35; // world units of travel the resize takes
+const RESIZE_AT = 2.6; // world units ahead of him where it snaps to size
+const RESIZE_SPAN = 0.22; // world units of travel the resize takes
 // The photos drift a little slower than the paving under his feet.
 const PHOTO_FLOW = 0.7;
 const APPEAR = 0.55; // seconds before its moment it is selected again
@@ -106,19 +113,16 @@ const momentPose = (m: Moment) => {
   const { lateral, height, farLateral, farHeight } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
     // Exactly the paving's motion: straight along the path, constant speed.
-    // Near him it drifts at a steady, slow pace; far away the stream is
-    // stretched out, so it trails a long way back down the path.
-    const ahead = Math.max(0, m.feature - sec);
-    const behind = Math.min(0, m.feature - sec);
-    const s =
-      FEATURE_S +
-      lane.speed * PHOTO_FLOW * (behind + ahead * (1 + ahead / STRETCH));
+    // One calm, constant pace for every photo, all the way from the far
+    // end of the stream. Photos simply join the queue earlier (some before
+    // the film begins) so the stream reaches a long way back.
+    const s = FEATURE_S + lane.speed * PHOTO_FLOW * (m.feature - sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     // A straight line, like the paving: from far ahead above the path on
     // the right of frame to its place beside him on the left, at constant
     // speed. It may pass behind him on the way.
-    const across = Math.min(1, Math.max(0, (s - FEATURE_S) / (FAR - 2)));
+    const across = Math.min(1, Math.max(0, (s - FEATURE_S) / STREAM_REACH));
     pos
       .set(0, height + (farHeight - height) * across - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
@@ -160,7 +164,11 @@ const momentPose = (m: Moment) => {
       smooth(-APPEAR - 0.25, -APPEAR, t) *
       (1 - smooth(SELECTED, SELECTED + 0.45, t));
     out.sel = Math.max(resizing, spoken) * act;
-    out.o = pasted * gone * (1 - sinking * 0.85) * act;
+    // Guided sequence: the queue waits quietly in the dark; each photo
+    // brightens as its turn approaches, so the eye is led along the stream
+    // to the one being spoken.
+    const turn = 0.32 + 0.68 * smooth(-9, -3, t);
+    out.o = pasted * gone * turn * (1 - sinking * 0.85) * act;
     out.damage = (m.damage ?? 0) * smooth(-1.0, 1.2, t);
     out.murk = (m.murk ?? 0) * smooth(-1.0, 1.4, t);
     return out;
