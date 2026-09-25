@@ -9,8 +9,8 @@ import {
   Treatment,
   createCardMaterial,
 } from "../shaders/card";
-import { expoOut } from "../utils/easing";
-import { PoseKey, compileKeys, emptyPose } from "../utils/keyframes";
+import { inertia } from "../utils/easing";
+import { Pose, PoseKey, compileKeys, emptyPose } from "../utils/keyframes";
 import { MaskName, Point, maskPoints } from "../utils/masks";
 import { DEG, clamp01, worldPerPixel } from "../utils/motion";
 import { useScene, useTimeline } from "./SceneContext";
@@ -20,7 +20,9 @@ export type StoryCardProps = {
   src?: string;
   texture?: Texture;
   fill?: string;
-  keys: PoseKey[];
+  keys?: PoseKey[];
+  // Alternative to keys: compute the pose directly (e.g. a carousel).
+  poseAt?: (seconds: number, out: Pose) => Pose;
   mask?: MaskName | Point[];
   treatment?: Treatment;
   contrast?: number;
@@ -40,7 +42,7 @@ export type StoryCardProps = {
 
 const LIGHT = new Vector3(-0.45, 0.6, 0.66).normalize();
 const DOF = 62;
-const GRAVITY = 3.2; // world units / s^2; slow, like debris in a dream
+const GRAVITY = 1.4; // world units / s^2; slow, like debris in a dream
 
 const tmp = new Vector3();
 const view = new Vector3();
@@ -66,6 +68,7 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
   const {
     id,
     keys,
+    poseAt,
     mask = "rect",
     treatment = "mono",
     contrast = 1.25,
@@ -88,7 +91,10 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
   const group = useRef<Group>(null);
   const whole = useRef<Mesh>(null);
   const halves = useRef<(Mesh | null)[]>([]);
-  const sample = useMemo(() => compileKeys(keys), [keys]);
+  const sample = useMemo(
+    () => poseAt ?? compileKeys(keys ?? []),
+    [keys, poseAt],
+  );
   const pose = useMemo(emptyPose, []);
   const micro = useMemo(
     () => microMotion(id, microAmount * settings.microMotionAmount),
@@ -162,7 +168,7 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
 
     // Crack and fall.
     const cracked = crackAt !== undefined && sec >= crackAt;
-    const open = cracked ? expoOut(clamp01((sec - crackAt!) / 0.9)) : 0;
+    const open = cracked ? inertia(clamp01((sec - crackAt!) / 2.0)) : 0;
     const fallT = fallAt !== undefined ? Math.max(0, sec - fallAt) : 0;
     if (whole.current) whole.current.visible = !cracked;
     halves.current.forEach((h, i) => {
@@ -174,11 +180,11 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
         -(0.5 * GRAVITY * fallT * fallT) / s + side * 0.015 * open,
         0,
       );
-      h.rotation.set(0, 0, side * -(4 * open + 38 * fallT * fallT) * DEG);
+      h.rotation.set(0, 0, side * -(3.5 * open + 16 * fallT * fallT) * DEG);
     });
     if (!cracked && fallT > 0) {
       g.position.y -= 0.5 * GRAVITY * fallT * fallT;
-      g.rotation.z += 30 * fallT * fallT * DEG;
+      g.rotation.z += 14 * fallT * fallT * DEG;
     }
 
     // Inner parallax: the photo drifts against the card's position in view,
@@ -195,7 +201,7 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
     );
     normal.set(0, 0, 1).applyEuler(g.rotation);
     const fog = Math.min(1, Math.max(0.3, 1.18 - depth / 26));
-    const fade = fallT > 0 ? clamp01(1 - (fallT - 0.6) / 0.9) : 1;
+    const fade = fallT > 0 ? clamp01(1 - (fallT - 1.0) / 1.8) : 1;
     for (const mat of materials) {
       const u = (mat as ShaderMaterial).uniforms;
       u.uInner.value.set(-ix, -iy);

@@ -11,6 +11,7 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
+  Quaternion,
   ShaderMaterial,
   SkinnedMesh,
   Vector3,
@@ -100,6 +101,52 @@ const outlineMaterial = (color: Color, thickness: number) => {
   return material;
 };
 
+// Many clips are not authored as clean loops: the last pose doesn't match
+// the first, so the walk snaps when it wraps. Find the two moments whose
+// poses match best (at least one full stride apart) and loop between them.
+export const findLoop = (gltf: GLTF) => {
+  const model = clone(gltf.scene);
+  const mixer = new AnimationMixer(model);
+  const clip = gltf.animations[0];
+  mixer.clipAction(clip).play();
+  const bones: Bone[] = [];
+  model.traverse((o) => {
+    if ((o as Bone).isBone) bones.push(o as Bone);
+  });
+  const step = 1 / 60;
+  const poses: number[][] = [];
+  const times: number[] = [];
+  for (let time = 0.05; time <= clip.duration - 0.01; time += step) {
+    mixer.setTime(time);
+    times.push(time);
+    poses.push(bones.flatMap((b) => b.quaternion.toArray() as number[]));
+  }
+  const distance = (a: number[], b: number[]) => {
+    let d = 0;
+    for (let i = 0; i < a.length; i += 4) {
+      const dot =
+        a[i] * b[i] +
+        a[i + 1] * b[i + 1] +
+        a[i + 2] * b[i + 2] +
+        a[i + 3] * b[i + 3];
+      d += 1 - Math.abs(dot);
+    }
+    return d;
+  };
+  // The loop start keeps a little clip before it, for the blend at the wrap.
+  let best = { start: times[0], end: times[times.length - 1], score: Infinity };
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] < 0.35) continue;
+    for (let j = i + 1; j < times.length; j++) {
+      const length = times[j] - times[i];
+      if (length < 1.8) continue;
+      const score = distance(poses[i], poses[j]) - length * 0.002;
+      if (score < best.score) best = { start: times[i], end: times[j], score };
+    }
+  }
+  return { start: best.start, end: best.end, bones: bones.map((b) => b.name) };
+};
+
 const tmpHead = new Vector3();
 const tmpMean = new Vector3();
 
@@ -169,7 +216,18 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
   const parallaxOffset = useParallax(1);
   const offset = useMemo(() => new Vector3(), []);
 
-  const { model, mixer, scale, lift, head, headMean } = useMemo(() => {
+  const {
+    model,
+    mixer,
+    scale,
+    lift,
+    head,
+    headMean,
+    loop,
+    loopBones,
+    saved,
+    savedPos,
+  } = useMemo(() => {
     const m = clone(gltf.scene);
     const mx = new AnimationMixer(m);
     mx.clipAction(gltf.animations[0]).play();
@@ -177,6 +235,11 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
     m.updateMatrixWorld(true);
     const box = new Box3().setFromObject(m, true);
     const s = height / (box.max.y - box.min.y);
+    const loop = findLoop(gltf);
+    const loopBones: Bone[] = [];
+    m.traverse((o) => {
+      if ((o as Bone).isBone) loopBones.push(o as Bone);
+    });
     const head = findBone(m, /Head$|Head_?\d*$/) ?? findBone(m, /Neck/);
     // The head's average position over the cycle, in model space: the
     // camera follows this, plus a little of the real bob.
@@ -198,6 +261,10 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
       lift: -box.min.y * s,
       head,
       headMean: mean,
+      loop,
+      loopBones,
+      saved: loopBones.map(() => new Quaternion()),
+      savedPos: loopBones.map(() => new Vector3()),
     };
   }, [gltf, height]);
 
@@ -268,10 +335,28 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
   useTimeline((t, frame) => {
     const g = group.current;
     if (!g) return;
-    // Posed on the output frame (stepped), never on shutter samples, so the
-    // figure stays crisp while the world blurs past.
+    // Posed on the output frame, never on shutter samples, so the figure
+    // stays crisp while the world blurs past.
     const stepped = Math.floor(frame / stepFrames) * stepFrames;
-    mixer.setTime(stepped / fps);
+    const length = loop.end - loop.start;
+    const phase = (((stepped / fps) % length) + length) % length;
+    mixer.setTime(loop.start + phase);
+    // Over the last moments of the loop, blend towards the matching poses
+    // just before its start, so the wrap is seamless.
+    const blend = 0.3;
+    const w = Math.max(0, (phase - (length - blend)) / blend);
+    if (w > 0) {
+      loopBones.forEach((b, i) => {
+        saved[i].copy(b.quaternion);
+        savedPos[i].copy(b.position);
+      });
+      mixer.setTime(loop.start - (length - phase));
+      const k = w * w * (3 - 2 * w);
+      loopBones.forEach((b, i) => {
+        b.quaternion.slerp(saved[i], 1 - k);
+        b.position.lerp(savedPos[i], 1 - k);
+      });
+    }
     const m = micro(t);
     const px = worldPerPixel(rig.focus, rig.fov);
     parallaxOffset(offset);

@@ -4,6 +4,7 @@ import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   BLACKOUT,
   FACE_AT,
+  HEADING,
   STORY_DURATION,
   StoryCardSpec,
   debtPile,
@@ -19,7 +20,6 @@ import { SubjectModel, measureWalkSpeed } from "./SubjectModel";
 
 const GROUND = -1.05;
 const HEIGHT = 2.05;
-const HEADING = 45; // walking away to the right, as in the reference
 const FPS = 30;
 const ROAD_BREAKS = 37.25; // "Jalan jalan mudah rusak"
 
@@ -34,11 +34,12 @@ const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 export const storyGrade = (sec: number): Grade => {
   const act2 = smooth(BLACKOUT, BLACKOUT + 0.8, sec);
   const face = smooth(FACE_AT, FACE_AT + 3, sec);
+  // A soft, breathing blackout on the silence, never a hard cut.
   const dark =
-    smooth(BLACKOUT - 0.3, BLACKOUT, sec) *
-    (1 - smooth(BLACKOUT + 0.45, BLACKOUT + 1.1, sec));
-  const end = smooth(STORY_DURATION - 0.9, STORY_DURATION - 0.1, sec);
-  const intro = 1 - smooth(0, 0.8, sec);
+    smooth(BLACKOUT - 0.7, BLACKOUT, sec) *
+    (1 - smooth(BLACKOUT + 0.5, BLACKOUT + 1.6, sec));
+  const end = smooth(STORY_DURATION - 1.6, STORY_DURATION - 0.1, sec);
+  const intro = 1 - smooth(0, 1.6, sec);
   const tint: [number, number, number] = [
     mix(mix(1.04, 0.95, act2), 1.05, face),
     mix(mix(1.0, 0.98, act2), 0.97, face),
@@ -99,7 +100,7 @@ export const StoryScene: React.FC<{
         z={0}
         height={HEIGHT}
         heading={HEADING}
-        stepFrames={2}
+        stepFrames={1}
         fps={FPS}
         exposure={2.4}
       />

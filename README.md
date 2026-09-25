@@ -11,16 +11,25 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **Act I (0-26 s):** what the colonisers left. Each photo flies in on its
-  line, is presented beside the rat, then settles into a collage that the
-  camera reveals on "Indonesia merdeka 80 tahun".
-- **Blackout** on the silence at 26 s.
-- **Act II (26.5-45 s):** colder and handheld. The same photos come forward
-  to decay: the mountain burns bare, the river turns muddy, ledger pages
-  pile into a mountain of debt, buildings and the road crack, the path
-  breaks up, and the railway bridge splits and falls.
+- **The carousel.** The photos ride a slow floating ring that turns around
+  the rat's walking line. They drift in from far ahead, pass beside him and
+  slip away, so the world keeps moving as he walks. Each photo is featured
+  (larger, brighter, sharper) on its line; quieter ambient cards keep the
+  ring full.
+- **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
+  for "Indonesia merdeka 80 tahun".
+- **A soft blackout** on the silence at 26 s.
+- **Act II (26.5-44 s):** the same places come back aged: the mountain
+  burnt bare, the river muddied, ledger pages flooding the ring, buildings
+  and the road cracking, the path breaking up, the bridge splitting and
+  falling.
 - **Ending (45 s-):** the camera swings round to the rat's face for "Now the
   Thief Speaks Our Tongue".
+- **Typography.** Each caption is introduced by an index and a drawn rule;
+  its words rise out of a mask one by one, with the emphasised words landing
+  last in an italic serif. Chapter marks guide the two acts.
+- **The walk** loops seamlessly: the matching poses in the clip are found
+  automatically and the wrap is blended.
 
 Every photo also slides inside its frame as it moves (inner parallax).
 Card journeys and camera shots live in `src/data/story.ts` and

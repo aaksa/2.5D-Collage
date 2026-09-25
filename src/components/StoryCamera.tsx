@@ -15,62 +15,54 @@ type Shot = {
 // The camera script, in seconds. Between shots the camera moves on smooth
 // curves, so it accelerates out of one mark and settles into the next.
 export const STORY_SHOTS: Shot[] = [
-  // Act I: behind the rat and a little above, as in the reference.
-  { t: 0, pos: [-0.55, 1.4, 6.8], target: [0, 0.4, 0], fov: 40, roll: -0.4 },
-  { t: 3.2, pos: [-0.4, 1.3, 6.2], target: [0.05, 0.4, 0], fov: 40 },
+  // Act I: behind the rat and a little above, as in the reference, aimed a
+  // touch right so the carousel opens up ahead of him.
   {
-    t: 5.6,
-    pos: [-0.15, 1.2, 5.6],
-    target: [0.05, 0.35, 0],
-    fov: 39,
-    roll: 0.2,
-  },
-  { t: 9.6, pos: [0.25, 1.15, 5.35], target: [0.1, 0.32, 0], fov: 38.5 },
-  {
-    t: 13.8,
-    pos: [-0.2, 1.2, 5.45],
-    target: [0, 0.34, 0],
-    fov: 38.5,
+    t: 0,
+    pos: [-0.5, 1.38, 7.0],
+    target: [0.15, 0.45, 0],
+    fov: 40,
     roll: -0.3,
   },
-  { t: 17.5, pos: [0.3, 1.1, 5.2], target: [0.1, 0.32, 0], fov: 38 },
-  { t: 20.6, pos: [0.15, 1.2, 5.5], target: [0.05, 0.4, 0], fov: 38.5 },
-  // "Indonesia merdeka 80 tahun": pull back to see everything they left.
-  { t: 22.6, pos: [0, 1.95, 9.2], target: [0, 1.0, -3], fov: 44, roll: 0.3 },
-  { t: 25.9, pos: [0.1, 1.8, 8.3], target: [0, 0.95, -3], fov: 43 },
+  { t: 7, pos: [-0.25, 1.26, 6.1], target: [0.2, 0.42, 0], fov: 39.5 },
+  {
+    t: 13,
+    pos: [0.15, 1.2, 5.75],
+    target: [0.25, 0.4, 0],
+    fov: 39,
+    roll: 0.25,
+  },
+  { t: 19, pos: [-0.1, 1.22, 5.8], target: [0.2, 0.42, 0], fov: 39 },
+  // "Indonesia merdeka 80 tahun": a long, slow pull back through the ring.
+  { t: 20.6, pos: [0.0, 1.26, 5.95], target: [0.2, 0.45, 0], fov: 39.5 },
+  {
+    t: 23.8,
+    pos: [0.05, 1.75, 8.6],
+    target: [0.35, 0.9, -2.2],
+    fov: 43,
+    roll: 0.3,
+  },
+  { t: 25.9, pos: [0.1, 1.7, 8.25], target: [0.35, 0.88, -2.2], fov: 42.5 },
   // The blackout hides a cut to Act II: lower, tighter, heavier.
-  { t: 26.3, pos: [0.1, 1.8, 8.3], target: [0, 0.95, -3], fov: 43 },
+  { t: 26.3, pos: [0.1, 1.7, 8.25], target: [0.35, 0.88, -2.2], fov: 42.5 },
   {
     t: 26.35,
-    pos: [-0.7, 0.85, 5.1],
-    target: [0, 0.35, 0],
-    fov: 37,
-    roll: -0.8,
+    pos: [-0.55, 0.95, 5.35],
+    target: [0.15, 0.4, 0],
+    fov: 38,
+    roll: -0.5,
   },
   {
-    t: 29.5,
-    pos: [-0.45, 0.85, 4.95],
-    target: [0.05, 0.36, 0],
-    fov: 37,
-    roll: -0.4,
+    t: 33,
+    pos: [0.25, 0.9, 5.1],
+    target: [0.25, 0.38, 0],
+    fov: 37.5,
+    roll: 0.35,
   },
-  {
-    t: 33.0,
-    pos: [0.35, 0.8, 4.85],
-    target: [0.1, 0.34, 0],
-    fov: 36.5,
-    roll: 0.5,
-  },
-  {
-    t: 37.0,
-    pos: [-0.3, 0.9, 5.05],
-    target: [0, 0.35, 0],
-    fov: 37,
-    roll: -0.3,
-  },
-  { t: 41.4, pos: [0, 1.0, 5.6], target: [0, 0.4, 0], fov: 38 },
+  { t: 39, pos: [-0.15, 0.95, 5.2], target: [0.2, 0.4, 0], fov: 37.5 },
   // "siapa yang penjajah itu": a slow, heavy push towards him.
-  { t: 44.8, pos: [0.05, 1.02, 4.4], target: [0, 0.5, 0], fov: 36 },
+  { t: 41.4, pos: [0, 1.0, 5.5], target: [0.1, 0.42, 0], fov: 38 },
+  { t: 44.8, pos: [0.05, 1.02, 4.5], target: [0, 0.5, 0], fov: 36 },
 ];
 
 const track = (pick: (s: Shot) => number): Key[] =>
@@ -107,7 +99,7 @@ export const StoryCamera: React.FC<{
     const sway = (seed: string, amp: number, base = 0.018) =>
       layeredNoise(t, seed, base) * amp * k;
     // Act II is handheld and uneasy; Act I and the ending are steadier.
-    const unease = sec > 26.3 && sec < faceAt ? 1.8 : 1;
+    const unease = sec > 26.3 && sec < faceAt ? 1.3 : 1;
 
     storyPos.set(
       curve(sec, tracks.px) + sway("sx", 0.02 * unease),
@@ -124,7 +116,7 @@ export const StoryCamera: React.FC<{
 
     // The ending: swing round in front of him and close in on his face,
     // slightly below eye level, leaving the right of frame for the words.
-    const e = inertia(clamp01((sec - faceAt) / 4.2));
+    const e = inertia(clamp01((sec - faceAt) / 4.8));
     if (e > 0) {
       const back = heading * DEG;
       const phi = lerp(0, 152, e) * DEG + (sec - faceAt) * 0.6 * DEG;
@@ -135,7 +127,7 @@ export const StoryCamera: React.FC<{
         0,
         -bx * Math.sin(phi) + bz * Math.cos(phi),
       );
-      const settle = clamp01((sec - faceAt - 4.2) / 6);
+      const settle = clamp01((sec - faceAt - 4.8) / 6);
       const dist = lerp(4.4, 1.55, e) - 0.14 * settle;
       facePos
         .copy(rig.head)

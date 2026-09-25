@@ -22,8 +22,15 @@ import {
   createSceneState,
 } from "../components/SceneContext";
 import { StoryScene } from "../components/StoryScene";
-import { ClosingLine, Cue, Subtitles, parseSrt } from "../components/Subtitles";
 import {
+  ChapterMarks,
+  ClosingLine,
+  Cue,
+  Subtitles,
+  parseSrt,
+} from "../components/Subtitles";
+import {
+  CHAPTERS,
   EMPHASIS,
   FACE_AT,
   STORY_DURATION,
@@ -130,6 +137,7 @@ const useAssets = () => {
       document.fonts.load('italic 400 200px "Instrument Serif"'),
       document.fonts.load("800 40px Inter"),
       document.fonts.load("500 40px Inter"),
+      document.fonts.load("600 40px Inter"),
     ]);
     Promise.all([
       Promise.all(srcs.map(async (s) => [s, await loadTexture(s)] as const)),
@@ -210,12 +218,13 @@ export const ThiefSpeaks: React.FC = () => {
               />
             </SceneProvider>
           </ThreeCanvas>
+          <ChapterMarks chapters={CHAPTERS} frame={frame} fps={fps} />
           <Subtitles
             cues={assets.cues}
             frame={frame}
             fps={fps}
             emphasis={EMPHASIS}
-            colors={{ highlight: COLORS.highlight, accent: COLORS.accent }}
+            colors={{ highlight: COLORS.highlight, accent: "#ff4b3e" }}
             hideAfter={FACE_AT + 0.5}
           />
           <ClosingLine
@@ -224,7 +233,7 @@ export const ThiefSpeaks: React.FC = () => {
             fps={fps}
             at={THIEF_LINE_AT}
             fadeOutAt={STORY_DURATION - 1.0}
-            accent={COLORS.accent}
+            accent="#ff4b3e"
           />
         </>
       ) : null}

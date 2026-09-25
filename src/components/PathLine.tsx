@@ -3,7 +3,7 @@ import { random } from "remotion";
 import { Group, Mesh, ShaderMaterial, Vector3 } from "three";
 import { useParallax } from "../hooks/useParallax";
 import { createCardMaterial } from "../shaders/card";
-import { expoOut } from "../utils/easing";
+import { inertia } from "../utils/easing";
 import { DEG, clamp01 } from "../utils/motion";
 import { useScene, useTimeline } from "./SceneContext";
 
@@ -91,7 +91,7 @@ export const PathLine: React.FC<{
       const broken =
         breakAt === undefined
           ? 0
-          : expoOut(clamp01((t / fps - breakAt - slab.delay) / 0.8)) *
+          : inertia(clamp01((t / fps - breakAt - slab.delay) / 1.8)) *
             clamp01((Math.abs(s) - 0.7) / 0.8);
       mesh.position.y -= slab.sink * broken;
       mesh.rotation.set(
@@ -110,7 +110,7 @@ export const PathLine: React.FC<{
       u.uDamage.value =
         breakAt === undefined
           ? 0
-          : 0.85 * expoOut(clamp01((t / fps - breakAt) / 0.8));
+          : 0.85 * inertia(clamp01((t / fps - breakAt) / 1.8));
     });
   });
 
