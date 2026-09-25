@@ -6,6 +6,30 @@ walker from the reference moves through floating photographic prints while a
 weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 30 fps, and the duration is configurable.
 
+## The story: "Now the Thief Speaks Our Tongue"
+
+`ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
+its subtitles (`public/audio/0926.srt`, parsed at render time):
+
+- **Act I (0-26 s):** what the colonisers left. Each photo flies in on its
+  line, is presented beside the rat, then settles into a collage that the
+  camera reveals on "Indonesia merdeka 80 tahun".
+- **Blackout** on the silence at 26 s.
+- **Act II (26.5-45 s):** colder and handheld. The same photos come forward
+  to decay: the mountain burns bare, the river turns muddy, ledger pages
+  pile into a mountain of debt, buildings and the road crack, the path
+  breaks up, and the railway bridge splits and falls.
+- **Ending (45 s-):** the camera swings round to the rat's face for "Now the
+  Thief Speaks Our Tongue".
+
+Every photo also slides inside its frame as it moves (inner parallax).
+Card journeys and camera shots live in `src/data/story.ts` and
+`src/components/StoryCamera.tsx`, keyed in seconds.
+
+```console
+npx remotion render ThiefSpeaks out/thief-speaks.mp4
+```
+
 ## Commands
 
 ```console
@@ -79,6 +103,8 @@ Each entry in `images` looks like:
 ## Assets
 
 - `public/photos/`: placeholder photos (see `CREDITS.md`). Replace freely.
+- `public/models/rat-in-suit.glb`: the rat in a suit (textures resized to
+  2048 px). `public/story/`: story photos (see `CREDITS.md`).
 - `public/models/boss-minion-orc.glb`: "Boss Minion Orc" by Lowpolyprincipal,
   CC BY 4.0. Credit the author when publishing (see `public/models/CREDITS.md`).
 - `public/character/`: the walk cycle cut from the reference clip by

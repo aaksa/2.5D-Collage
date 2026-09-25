@@ -97,7 +97,20 @@ class MotionBlurPass extends Pass {
   }
 }
 
-export const Renderer: React.FC = () => {
+export type Grade = {
+  exposure: number;
+  saturation: number;
+  tint: [number, number, number];
+  vignette: number;
+  grain: number; // multiplier on the base grain
+};
+
+export const Renderer: React.FC<{
+  // Colour grade over time (seconds), for stories that change mood.
+  grade?: (seconds: number) => Grade;
+  // Motion-blur samples per frame when rendering (default 10).
+  samples?: number;
+}> = ({ grade, samples = 10 }) => {
   const frame = useCurrentFrame();
   const { gl, scene, camera, size } = useThree();
   const state = useScene();
@@ -110,7 +123,7 @@ export const Renderer: React.FC = () => {
     const b = new MotionBlurPass(scene, camera, state);
     c.addPass(b);
     // Bloom only catches the brightest highlights: the subject's glow.
-    c.addPass(new UnrealBloomPass(new Vector2(1920, 1080), 0.3, 0.5, 0.92));
+    c.addPass(new UnrealBloomPass(new Vector2(1920, 1080), 0.3, 0.5, 1.0));
     c.addPass(new OutputPass());
     c.addPass(finish);
     return { composer: c, blur: b };
@@ -130,8 +143,17 @@ export const Renderer: React.FC = () => {
     const rendering = getRemotionEnvironment().isRendering;
     blur.frame = frameRef.current;
     blur.shutter = motionBlurAmount;
-    blur.samples = motionBlurAmount > 0 ? (rendering ? 10 : 2) : 1;
+    blur.samples = motionBlurAmount > 0 ? (rendering ? samples : 2) : 1;
     finish.uniforms.uFrame.value = frameRef.current;
+    if (grade) {
+      const g = grade(frameRef.current / 30);
+      finish.uniforms.uExposure.value = g.exposure;
+      finish.uniforms.uSaturation.value = g.saturation;
+      finish.uniforms.uTint.value.set(...g.tint);
+      finish.uniforms.uVignette.value = g.vignette;
+      finish.uniforms.uGrain.value =
+        0.04 * state.settings.grainAmount * g.grain;
+    }
     composer.render();
   }, 1);
 

@@ -1,4 +1,4 @@
-import { Vector2 } from "three";
+import { Vector2, Vector3 } from "three";
 import { noiseGlsl } from "./common";
 
 const fullscreenVertex = /* glsl */ `
@@ -37,6 +37,9 @@ export const FinishShader = {
     uAberration: { value: 0.0018 },
     uVignette: { value: 0.28 },
     uResolution: { value: new Vector2(1920, 1080) },
+    uExposure: { value: 1 },
+    uSaturation: { value: 1 },
+    uTint: { value: new Vector3(1, 1, 1) },
   },
   vertexShader: fullscreenVertex,
   fragmentShader: /* glsl */ `
@@ -47,6 +50,9 @@ export const FinishShader = {
     uniform float uAberration;
     uniform float uVignette;
     uniform vec2 uResolution;
+    uniform float uExposure;
+    uniform float uSaturation;
+    uniform vec3 uTint;
     varying vec2 vUv;
 
     ${noiseGlsl}
@@ -68,6 +74,11 @@ export const FinishShader = {
         texture2D(tDiffuse, vUv + shift).b
       );
 
+      // Grade: tint, saturation, exposure (all display-space, gentle).
+      col *= uTint;
+      col = mix(vec3(luma(col)), col, uSaturation);
+      col *= uExposure;
+
       float l = luma(col);
       vec2 px = vUv * uResolution;
       vec2 hg = mat2(0.8660, -0.5, 0.5, 0.8660) * px / 3.2;
@@ -82,6 +93,7 @@ export const FinishShader = {
 
       float v = smoothstep(0.95, 0.25, length(c * vec2(1.0, 1.15)) * 1.2);
       col *= mix(1.0, v, uVignette);
+      col *= min(1.0, uExposure * 4.0);
       gl_FragColor = vec4(col, 1.0);
     }
   `,

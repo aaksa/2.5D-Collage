@@ -45,6 +45,10 @@ uniform float uTreatment;
 uniform vec3 uDark;
 uniform vec3 uLight;
 uniform vec3 uPaperColor;
+uniform vec2 uInner;
+uniform float uDamage;
+uniform vec3 uTint;
+uniform float uTintAmount;
 varying vec2 vUv;
 
 ${noiseGlsl}
@@ -102,7 +106,8 @@ void main() {
   float alpha = 1.0 - smoothstep(-aa, aa, d);
   vec4 tex = vec4(uFill, 1.0);
   if (uHasMap > 0.5) {
-    vec2 iuv = uCrop.xy + vUv * uCrop.zw;
+    // uInner slides the photo inside its frame: parallax within the card.
+    vec2 iuv = uCrop.xy + uInner + vUv * uCrop.zw;
     tex = sampleBlurred(iuv, vec2(uBlur / uAspect, uBlur) * uCrop.zw);
   }
 
@@ -120,6 +125,18 @@ void main() {
     col = mix(uDark, uPaperColor, smoothstep(0.15, 0.21, lc + grit));
   } else {
     col = max(vec3(0.0), (col - 0.18) * uContrast + 0.18 + uBrightness);
+  }
+
+  // Decay: murky wash, then grime, burn and crushed contrast.
+  col = mix(col, vec3(luma(col)) * uTint * 1.6, uTintAmount);
+  if (uDamage > 0.0) {
+    vec2 q = vec2(vUv.x * uAspect, vUv.y);
+    float grime = fbm(q * 7.0 + uSeed * 1.7);
+    float burn = smoothstep(0.35, 0.75, fbm(q * 2.3 + uSeed) + grime * 0.3);
+    col = mix(col, max(vec3(0.0), (col - 0.12) * 1.7), uDamage * 0.7);
+    col *= 1.0 - uDamage * (0.35 + 0.5 * burn * grime);
+    float scratch = smoothstep(0.985, 1.0, noise(vec2(q.x * 260.0, q.y * 4.0) + uSeed));
+    col += scratch * uDamage * 0.25;
   }
 
   float paper = fbm(vec2(vUv.x * uAspect, vUv.y) * 55.0 + uSeed * 3.0);
@@ -182,6 +199,10 @@ export const createCardMaterial = (opts: {
       uDark: { value: new Color("#0b0a09") },
       uLight: { value: new Color("#e9e4da") },
       uPaperColor: { value: new Color("#ebe6dc") },
+      uInner: { value: new Vector2() },
+      uDamage: { value: 0 },
+      uTint: { value: new Color("#6b5a3e") },
+      uTintAmount: { value: 0 },
     },
   });
   setBlend(material, "normal");

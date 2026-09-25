@@ -12,6 +12,7 @@ export type Rig = {
   rest: Vector3; // camera at t = 0, without noise; the parallax origin
   fov: number;
   focus: number; // distance to the subject, for depth of field
+  head: Vector3; // the subject's head, for close-ups (set by the subject)
 };
 
 export type Settings = {
@@ -58,6 +59,7 @@ export const createSceneState = (
       rest: new Vector3(),
       fov: 42,
       focus: 7,
+      head: new Vector3(0, 0.8, 0),
     },
     settings,
     textures,

@@ -5,13 +5,27 @@ import {
   PremiumCollage,
   calculateMetadata,
 } from "./compositions/PremiumCollage";
+import {
+  STORY_FPS,
+  STORY_FRAMES,
+  ThiefSpeaks,
+} from "./compositions/ThiefSpeaks";
 import { defaultProps, premiumCollageSchema } from "./data/heroScene";
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        // npx remotion render PremiumCollage out/premium-collage.mp4
+        // The story: npx remotion render ThiefSpeaks out/thief-speaks.mp4
+        id="ThiefSpeaks"
+        component={ThiefSpeaks}
+        durationInFrames={STORY_FRAMES}
+        fps={STORY_FPS}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        // The hero scene: npx remotion render PremiumCollage out/premium-collage.mp4
         id="PremiumCollage"
         component={PremiumCollage}
         schema={premiumCollageSchema}

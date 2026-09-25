@@ -32,6 +32,9 @@ export type SubjectModelProps = {
   heading: number; // degrees; 90 = walking straight to the right
   stepFrames: number; // hold each animation pose this many frames (2 = on twos)
   fps: number;
+  // Brightens the lit colour before it is split into inks, so dark models
+  // (a black rat in a navy suit) still print red and yellow.
+  exposure?: number;
 };
 
 // Screenprint treatment on top of the model's own lit material: the final
@@ -40,8 +43,10 @@ export type SubjectModelProps = {
 const screenprint = (
   material: MeshStandardMaterial,
   inks: { ink: Color; accent: Color; mid: Color; highlight: Color },
+  exposure: number,
 ) => {
   material.onBeforeCompile = (shader) => {
+    shader.uniforms.uExposure = { value: exposure };
     shader.uniforms.uInk = { value: inks.ink };
     shader.uniforms.uAccent = { value: inks.accent };
     shader.uniforms.uMid = { value: inks.mid };
@@ -54,6 +59,7 @@ const screenprint = (
         uniform vec3 uAccent;
         uniform vec3 uMid;
         uniform vec3 uHighlight;
+        uniform float uExposure;
         float spHash(vec2 p) {
           vec3 p3 = fract(vec3(p.xyx) * 0.1031);
           p3 += dot(p3, p3.yzx + 33.33);
@@ -65,7 +71,7 @@ const screenprint = (
         "#include <opaque_fragment>",
         /* glsl */ `
         {
-          float l = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
+          float l = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722)) * uExposure;
           vec2 g = mat2(0.7071, -0.7071, 0.7071, 0.7071) * gl_FragCoord.xy / 4.5;
           float dotMask = smoothstep(0.34, 0.22, length(fract(g) - 0.5));
           l += (dotMask - 0.45) * 0.16 * l * (1.0 - l) * 4.0;
@@ -93,6 +99,9 @@ const outlineMaterial = (color: Color, thickness: number) => {
   };
   return material;
 };
+
+const tmpHead = new Vector3();
+const tmpMean = new Vector3();
 
 const findBone = (root: Object3D, pattern: RegExp) => {
   let found: Bone | null = null;
@@ -149,6 +158,7 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
   heading,
   stepFrames,
   fps,
+  exposure = 1,
 }) => {
   const { settings, rig } = useScene();
   const group = useRef<Group>(null);
@@ -159,7 +169,7 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
   const parallaxOffset = useParallax(1);
   const offset = useMemo(() => new Vector3(), []);
 
-  const { model, mixer, scale, lift } = useMemo(() => {
+  const { model, mixer, scale, lift, head, headMean } = useMemo(() => {
     const m = clone(gltf.scene);
     const mx = new AnimationMixer(m);
     mx.clipAction(gltf.animations[0]).play();
@@ -167,7 +177,28 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
     m.updateMatrixWorld(true);
     const box = new Box3().setFromObject(m, true);
     const s = height / (box.max.y - box.min.y);
-    return { model: m, mixer: mx, scale: s, lift: -box.min.y * s };
+    const head = findBone(m, /Head$|Head_?\d*$/) ?? findBone(m, /Neck/);
+    // The head's average position over the cycle, in model space: the
+    // camera follows this, plus a little of the real bob.
+    const mean = new Vector3();
+    if (head) {
+      const clip = gltf.animations[0];
+      for (let i = 0; i < 24; i++) {
+        mx.setTime((i / 24) * clip.duration);
+        m.updateMatrixWorld(true);
+        mean.add(m.worldToLocal(head.getWorldPosition(new Vector3())));
+      }
+      mean.divideScalar(24);
+      mx.setTime(0);
+    }
+    return {
+      model: m,
+      mixer: mx,
+      scale: s,
+      lift: -box.min.y * s,
+      head,
+      headMean: mean,
+    };
   }, [gltf, height]);
 
   useLayoutEffect(() => {
@@ -191,7 +222,7 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
       ) as Material[];
       mats.forEach((mat) => {
         if ((mat as MeshStandardMaterial).isMeshStandardMaterial) {
-          screenprint(mat as MeshStandardMaterial, inks);
+          screenprint(mat as MeshStandardMaterial, inks, exposure);
         }
       });
       if ((mesh as SkinnedMesh).isSkinnedMesh) {
@@ -215,7 +246,7 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
     return () => {
       pairs.forEach(({ outline }) => outline.removeFromParent());
     };
-  }, [model, scale, settings]);
+  }, [model, scale, settings, exposure]);
 
   const shadow = useMemo(
     () =>
@@ -245,7 +276,16 @@ export const SubjectModel: React.FC<SubjectModelProps> = ({
     const px = worldPerPixel(rig.focus, rig.fov);
     parallaxOffset(offset);
     g.position.set(x + offset.x + m.x * px, offset.y, z + offset.z);
-  });
+
+    if (head) {
+      g.updateMatrixWorld(true);
+      const now = head.getWorldPosition(tmpHead);
+      const steady = model.localToWorld(tmpMean.copy(headMean));
+      rig.head.copy(steady).lerp(now, 0.3);
+    }
+    // Pose the subject before the camera (order 0) so close-ups can aim at
+    // this frame's head.
+  }, -1);
 
   return (
     <group ref={group}>
