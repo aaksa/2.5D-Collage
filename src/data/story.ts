@@ -107,12 +107,17 @@ const momentPose = (m: Moment) => {
     const s = FEATURE_S + lane.speed * (m.feature - sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
+    // Far ahead, photos float high above the far end of the path, on the
+    // right of frame; as they come forward they glide left and down into
+    // their row beside him, passing above his head, never behind it.
+    const across = smooth(FEATURE_S, FEATURE_S + 8.5, s); // right -> left
+    const lift = smooth(FEATURE_S, FEATURE_S + 2.2, s); // over his head
+    const far = smooth(FEATURE_S + 3.2, FEATURE_S + 9, s); // settles lower
+    const y = height + (2.6 - height) * lift - 2.1 * far;
     pos
-      .set(0, height - sinking * 1.1, 0)
+      .set(0, y - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
-      // Photos further ahead sit a little wider, so the queue never hides
-      // behind him in perspective.
-      .addScaledVector(LEFT, lateral + 0.7 * Math.max(0, s - FEATURE_S));
+      .addScaledVector(LEFT, lateral + (0.1 - lateral) * across);
 
     // Square to the viewer, like an image on a canvas.
     toCamera.copy(CAMERA_HOME).sub(pos).normalize();
