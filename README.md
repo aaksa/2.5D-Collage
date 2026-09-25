@@ -46,7 +46,7 @@ Rendering uses WebGL. On a machine with a GPU the default (`angle`, set in
   (`components/SubjectPlane.tsx`).
 - **Transition** (`components/TransitionCard.tsx`). A print sweeps across just
   in front of the lens as a spatial wipe, uncovering the title.
-- **Motion blur** (`components/Renderer.tsx`). The scene is re-posed at 12
+- **Motion blur** (`components/Renderer.tsx`). The scene is re-posed at 10
   moments across a 180° shutter and the renders are averaged. Fast foreground
   motion smears; the stop-motion subject stays crisp.
 - **Finish** (`shaders/post.ts`). Highlight-only bloom, then per-frame
