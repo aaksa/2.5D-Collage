@@ -59,19 +59,18 @@ const LEFT = new Vector3(-1, 0, -0.3).normalize();
 const FEATURE_S = 0.4; // beside him, a step ahead
 const CAMERA_HOME = new Vector3(0, 1.15, 5.8);
 
-// Two rows, alternated line by line so neighbours never overlap. Each row
-// has its own far end, so the queue spreads into two streams: one low along
-// the left of the far path, one high over its right.
-const ROWS = {
-  low: { lateral: 2.85, height: 0.15, farLateral: 2.6, farHeight: -0.6 },
-  high: { lateral: 2.75, height: 1.42, farLateral: -3.4, farHeight: 2.9 },
-};
+// One stream. Every photo follows the same line: from far down the path,
+// above and a little right of its far end, to its place beside him on the
+// left. ("low" and "high" are kept as names for the story list below.)
+const STREAM = { lateral: 2.8, height: 0.75, farLateral: -0.7, farHeight: 1.7 };
+const ROWS = { low: STREAM, high: STREAM };
 
 // A photo first appears far down the path, like the far end of the paving,
 // and travels towards him. While it is still well ahead of him it is
 // selected and resized up to full size from its corner, so it arrives big;
 // it is selected again while its line is spoken, then travels on past him.
-const FAR = 20; // how far ahead it appears, in world units along the path
+const FAR = 34; // how far ahead it appears, in world units along the path
+const STRETCH = 3.5; // seconds: how quickly the stream opens out with distance
 const RESIZE_AT = 6.5; // world units ahead of him where it snaps to size
 const RESIZE_SPAN = 0.35; // world units of travel the resize takes
 // The photos drift a little slower than the paving under his feet.
@@ -107,7 +106,13 @@ const momentPose = (m: Moment) => {
   const { lateral, height, farLateral, farHeight } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
     // Exactly the paving's motion: straight along the path, constant speed.
-    const s = FEATURE_S + lane.speed * PHOTO_FLOW * (m.feature - sec);
+    // Near him it drifts at a steady, slow pace; far away the stream is
+    // stretched out, so it trails a long way back down the path.
+    const ahead = Math.max(0, m.feature - sec);
+    const behind = Math.min(0, m.feature - sec);
+    const s =
+      FEATURE_S +
+      lane.speed * PHOTO_FLOW * (behind + ahead * (1 + ahead / STRETCH));
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     // A straight line, like the paving: from far ahead above the path on
@@ -130,7 +135,7 @@ const momentPose = (m: Moment) => {
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
         : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec);
-    const pasted = smooth(FAR, FAR - 3, s); // fades in from far away
+    const pasted = smooth(FAR, FAR - 6, s); // fades in from far away
     const gone = smooth(-3.4, -2.2, s); // fades as it passes out of frame
 
     out.x = pos.x;
