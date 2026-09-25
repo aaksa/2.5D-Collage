@@ -63,15 +63,17 @@ const CAMERA_HOME = new Vector3(0, 1.15, 5.8);
 
 // Two rows, alternated line by line so neighbours never overlap.
 const ROWS = {
-  low: { lateral: 2.35, height: 0.15 },
-  high: { lateral: 2.25, height: 1.42 },
+  low: { lateral: 2.85, height: 0.15 },
+  high: { lateral: 2.75, height: 1.42 },
 };
 
-// A photo is "pasted" a little ahead of him and resized up from its corner,
-// stays selected while its line is spoken, then simply travels on with the
-// paving until it has passed him.
-const APPEAR = 1.2; // seconds before its moment
-const RESIZE = 1.0; // seconds to grow to full size
+// A photo first appears far down the path, like the far end of the paving,
+// and travels towards him at the paving's speed. As it nears him it is
+// selected and resized up from its corner; the selection clears after its
+// line, and it travels on past him.
+const FAR = 14; // how far ahead it appears, in world units along the path
+const APPEAR = 1.6; // seconds before its moment the resize starts
+const RESIZE = 1.2; // seconds to grow to full size
 const SELECTED = 1.5; // seconds after its moment the selection clears
 
 const smooth = (a: number, b: number, x: number) => {
@@ -108,7 +110,9 @@ const momentPose = (m: Moment) => {
     pos
       .set(0, height - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
-      .addScaledVector(LEFT, lateral);
+      // Photos further ahead sit a little wider, so the queue never hides
+      // behind him in perspective.
+      .addScaledVector(LEFT, lateral + 0.7 * Math.max(0, s - FEATURE_S));
 
     // Square to the viewer, like an image on a canvas.
     toCamera.copy(CAMERA_HOME).sub(pos).normalize();
@@ -121,7 +125,7 @@ const momentPose = (m: Moment) => {
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
         : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec);
-    const pasted = smooth(-APPEAR, -APPEAR + 0.2, t);
+    const pasted = smooth(FAR, FAR - 2.5, s); // fades in from far away
     const gone = smooth(-3.4, -2.2, s); // fades as it passes out of frame
 
     out.x = pos.x;
@@ -131,9 +135,9 @@ const momentPose = (m: Moment) => {
     out.ry = (dummy.rotation.y * 180) / Math.PI;
     out.rz = (dummy.rotation.z * 180) / Math.PI;
     out.s = m.size;
-    out.grow = 0.32 + 0.68 * glide((t + APPEAR) / RESIZE);
+    out.grow = 0.55 + 0.45 * glide((t + APPEAR) / RESIZE);
     out.sel =
-      smooth(-APPEAR, -APPEAR + 0.12, t) *
+      smooth(-APPEAR - 0.25, -APPEAR, t) *
       (1 - smooth(SELECTED, SELECTED + 0.45, t)) *
       act;
     out.o = pasted * gone * (1 - sinking * 0.85) * act;
