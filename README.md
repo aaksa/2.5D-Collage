@@ -1,54 +1,38 @@
-# Remotion video
+# 2.5D Collage
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
-
-Welcome to your Remotion project!
+A Remotion video (1920×1080, 30 fps): a cut-out walker in a posterised
+red/yellow screen-print look walks through a starfield. Grayscale photo shards
+float past and paving slabs scroll underneath. Everything sits in one 3D camera
+space, so layers separate with real parallax.
 
 ## Commands
 
-**Install Dependencies**
-
 ```console
 npm i
+npm run dev                                   # Remotion Studio preview
+npx remotion render Collage out/collage.mp4   # render the video
 ```
 
-**Start Preview**
+## Replacing the photos
 
-```console
-npm run dev
-```
+The shards use `public/photos/photo-01.svg` … `photo-08.svg`, which are
+placeholders. Drop your own images into `public/photos/` and update the
+`photos` list in `src/Root.tsx` (or edit the props in Studio). Any number of
+photos works, in colour or not: they are shown in grayscale automatically.
+`floorTexture` sets the image used for the paving slabs.
 
-**Render video**
+`walkerColors` (darkest to lightest) and `glowColor` control the walker's look.
 
-```console
-npx remotion render
-```
+## Where things live
 
-**Upgrade Remotion**
+- `src/Collage/camera.ts`: camera path, walking speed and projection
+- `src/Collage/scene.ts`: seeded layout of shards, slabs and stars
+- `src/Collage/Walker.tsx`: the walker frame sequence and its colour filter
 
-```console
-npx remotion upgrade
-```
+## Re-cutting the walker
 
-## Docs
-
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
-
-## Help
-
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
-
-## Issues
-
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+`public/walker/` holds the walker as a transparent WebP sequence, cut from
+`walking.mp4` with `scripts/matte_walker.py` (rembg `u2net_human_seg`). See the
+docstring in that script to regenerate it from a new clip. If the new clip has
+a different framing, adjust `CROP` and `GROUND_Y` there. `GROUND_Y` is the row
+where the feet meet the ground; anything below it is cut away.

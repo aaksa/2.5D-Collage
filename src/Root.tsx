@@ -1,45 +1,37 @@
 import "./index.css";
 import { Composition } from "remotion";
-import { HelloWorld } from "./HelloWorld";
-import { Logo } from "./HelloWorld/Logo";
-
-// Each <Composition> is an entry in the sidebar!
+import { FPS, HEIGHT, WIDTH } from "./Collage/camera";
+import { Collage, collageSchema } from "./Collage/Collage";
+import { WALKER_FRAMES } from "./Collage/Walker";
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <>
-      <Composition
-        // You can take the "id" to render a video:
-        // npx remotion render HelloWorld
-        id="HelloWorld"
-        component={HelloWorld}
-        durationInFrames={150}
-        fps={30}
-        width={1920}
-        height={1080}
-        // You can override these props for each render:
-        // https://www.remotion.dev/docs/parametrized-rendering
-        defaultProps={{
-          titleText: "Welcome to Remotion",
-          titleColor: "#000000",
-          logoColor1: "#91EAE4",
-          logoColor2: "#86A8E7",
-        }}
-      />
-
-      {/* Mount any React component to make it show up in the sidebar and work on it individually! */}
-      <Composition
-        id="OnlyLogo"
-        component={Logo}
-        durationInFrames={150}
-        fps={30}
-        width={1920}
-        height={1080}
-        defaultProps={{
-          logoColor1: "#91dAE2",
-          logoColor2: "#86A8E7",
-        }}
-      />
-    </>
+    <Composition
+      // npx remotion render Collage out/collage.mp4
+      id="Collage"
+      component={Collage}
+      schema={collageSchema}
+      durationInFrames={WALKER_FRAMES}
+      fps={FPS}
+      width={WIDTH}
+      height={HEIGHT}
+      defaultProps={{
+        // Swap these for your own photos in public/photos/.
+        photos: [
+          "photos/photo-01.svg",
+          "photos/photo-02.svg",
+          "photos/photo-03.svg",
+          "photos/photo-04.svg",
+          "photos/photo-05.svg",
+          "photos/photo-06.svg",
+          "photos/photo-07.svg",
+          "photos/photo-08.svg",
+        ],
+        floorTexture: "photos/pavement.svg",
+        // Darkest to lightest.
+        walkerColors: ["#2a0406", "#b5141d", "#e0302a", "#e8d93a", "#f3f57a"],
+        glowColor: "#ffe94a",
+      }}
+    />
   );
 };
