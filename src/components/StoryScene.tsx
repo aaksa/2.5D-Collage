@@ -8,6 +8,7 @@ import {
   STORY_DURATION,
   StoryCardSpec,
   debtPile,
+  lane,
   storyCards,
 } from "../data/story";
 import { Backdrop } from "./Backdrop";
@@ -62,7 +63,10 @@ export const StoryScene: React.FC<{
   const feet = useMemo(() => new Vector3(0, GROUND, 0), []);
   const walk = useMemo(() => {
     const { speed, height } = measureWalkSpeed(model);
-    return (speed * HEIGHT) / height;
+    const perSecond = (speed * HEIGHT) / height;
+    // The photo lane travels with the paving, at his pace.
+    lane.speed = perSecond;
+    return perSecond;
   }, [model]);
   const cards = useMemo<StoryCardSpec[]>(
     () => [...storyCards, ...debtPile],

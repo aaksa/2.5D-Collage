@@ -8,9 +8,9 @@ import { MaskName } from "../utils/masks";
 // narration in public/audio/0926.mp3. All times are in seconds and follow
 // the subtitle cues in public/audio/0926.srt.
 //
-// Composition: the rat walks the path; the photos ride a slow carousel on
-// his LEFT only, a drum turning beside him that carries them from far behind
-// the scene towards the lens as he walks. The right of frame is kept for
+// Composition: the rat walks the path; the photos float in a lane on his
+// LEFT only and travel like the paving slabs, appearing far ahead of him and
+// gliding back past him towards the lens as he walks. The right of frame is kept for
 // type: captions, the "350" and the 1945-2025 year counter.
 //
 // Act I (0-26 s): what the colonisers left. Each photo is featured (larger,
@@ -47,13 +47,20 @@ export const CHAPTERS = [
 
 const photo = (name: string) => `story/${name}.jpg`;
 
-// ---- The carousel: a drum turning on the rat's left -----------------------
+// ---- The carousel: a floating lane on the rat's left ----------------------
+//
+// The photos float in a lane beside the path and travel exactly like the
+// paving slabs: they appear far ahead of him along the path and glide back
+// past his left side towards the lens, at his walking pace. Each one's place
+// in the lane's cross-section is a point on a half-ring to his left.
 
-const AXIS_X = -3.1; // the drum's axis runs front-to-back, left of the path
-const AXIS_Y = 0.45;
-const FLOW = 0.75; // world units per second towards the lens
-const SPIN = 7; // degrees per second: the drum turns, slowly
-const FEATURE_Z = -0.4; // beside the rat
+// The lane moves at the rat's measured walking speed (set by the scene).
+export const lane = { speed: 0.6 };
+
+const RAD = Math.PI / 180;
+const AXIS = new Vector3(Math.sin(HEADING * RAD), 0, -Math.cos(HEADING * RAD));
+const LEFT = new Vector3().crossVectors(new Vector3(0, 1, 0), AXIS).normalize();
+const FEATURE_S = 0.4; // beside him, a step ahead
 const CAMERA_HOME = new Vector3(0, 1.15, 5.8);
 
 const smooth = (a: number, b: number, x: number) => {
@@ -63,13 +70,16 @@ const smooth = (a: number, b: number, x: number) => {
 
 type Orbit = {
   feature: number; // seconds: when it is beside him
-  phi: number; // degrees round the drum then; 0 = the side facing the rat
-  radius: number; // at most ~1.8, so it never crosses the path
+  phi: number; // place on the half-ring; 0 = nearest the path, 90 = high
+  radius: number;
   size: number;
   act: 1 | 2;
   emphasis: number; // 1 featured, 0 ambient
   damage?: number;
   murk?: number;
+  // Explicit place in the lane, overriding phi/radius.
+  lateral?: number;
+  height?: number;
 };
 
 const dummy = new Object3D();
@@ -80,20 +90,17 @@ const lookTarget = new Vector3();
 const orbitPose = (o: Orbit, seed: string) => {
   const phase = random(`${seed}-phase`) * Math.PI * 2;
   const tilt = (random(`${seed}-tilt`) - 0.5) * 16;
+  const lateral = o.lateral ?? 2.35 - Math.cos(o.phi * RAD) * o.radius * 0.55;
+  const height = o.height ?? 0.55 + Math.sin(o.phi * RAD) * o.radius * 0.75;
   return (sec: number, out: Pose): Pose => {
-    const z = FEATURE_Z + FLOW * (sec - o.feature);
-    const phi = ((o.phi + SPIN * (sec - o.feature)) * Math.PI) / 180;
-    pos.set(
-      AXIS_X + Math.cos(phi) * o.radius,
-      AXIS_Y +
-        Math.sin(phi) * o.radius * 0.95 +
-        0.05 * Math.sin(sec * 0.45 + phase),
-      z + 0.35 * Math.sin(phi),
-    );
+    const s = FEATURE_S + lane.speed * (o.feature - sec);
+    pos
+      .set(0, height + 0.05 * Math.sin(sec * 0.45 + phase), 0)
+      .addScaledVector(AXIS, s)
+      .addScaledVector(LEFT, lateral);
 
-    // Face the viewer, turned a touch towards the rat.
-    toCamera.copy(CAMERA_HOME).sub(pos).normalize();
-    toCamera.x += 0.18;
+    // Face the viewer, turned a touch towards the path.
+    toCamera.copy(CAMERA_HOME).sub(pos).normalize().addScaledVector(LEFT, -0.2);
     dummy.position.copy(pos);
     dummy.rotation.set(0, 0, 0);
     dummy.lookAt(lookTarget.copy(pos).add(toCamera));
@@ -101,8 +108,8 @@ const orbitPose = (o: Orbit, seed: string) => {
 
     // Featured: a gentle swell in size and presence around its moment.
     const g = o.emphasis * Math.exp(-(((sec - o.feature) / 2.1) ** 2));
-    const far = smooth(-15, -10, z);
-    const near = 1 - smooth(1.4, 2.8, z);
+    const far = smooth(17, 11.5, s);
+    const near = smooth(-3.3, -1.7, s);
     const act =
       o.act === 1
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
@@ -116,7 +123,7 @@ const orbitPose = (o: Orbit, seed: string) => {
     out.rx = (dummy.rotation.x * 180) / Math.PI;
     out.ry = (dummy.rotation.y * 180) / Math.PI;
     out.rz = (dummy.rotation.z * 180) / Math.PI;
-    out.s = o.size * (1 + 0.26 * g);
+    out.s = o.size * (1 + 0.22 * g);
     out.o = far * near * act * recede * presence;
     const age = o.act === 2 ? 0.25 : 0;
     const target = o.damage ?? age;
@@ -293,9 +300,9 @@ const SHAPES: MaskName[] = [
   "kite",
 ];
 
-const ambient: StoryCardSpec[] = new Array(30).fill(0).map((_, i) => {
+const ambient: StoryCardSpec[] = new Array(20).fill(0).map((_, i) => {
   const r = (k: string) => random(`ambient-${i}-${k}`);
-  const feature = -20 + i * 2.5 + r("t") * 1.2;
+  const feature = -18 + i * 3.6 + r("t") * 1.5;
   const act: 1 | 2 = feature < BLACKOUT + 1 ? 1 : 2;
   const pool = act === 1 ? AMBIENT_ACT_ONE : AMBIENT_ACT_TWO;
   return card({
@@ -305,8 +312,8 @@ const ambient: StoryCardSpec[] = new Array(30).fill(0).map((_, i) => {
     ...COLOUR,
     orbit: {
       feature,
-      phi: r("phi") * 360,
-      radius: 0.9 + r("radius") * 0.9,
+      phi: 110 + r("phi") * 150,
+      radius: 1.3 + r("radius") * 0.8,
       size: 0.85 + r("size") * 0.45,
       act,
       emphasis: 0,
@@ -328,8 +335,11 @@ export const debtPile: StoryCardSpec[] = new Array(16).fill(0).map((_, i) =>
     roughness: 0.02,
     orbit: {
       feature: 32.1 + (i * BEAT) / 3,
-      phi: -80 + ((i * 47) % 200),
-      radius: 0.7 + (i % 4) * 0.3,
+      phi: 0,
+      radius: 0,
+      // A pile rising in the lane, page on page.
+      lateral: 1.6 + Math.floor(i / 8) * 0.7,
+      height: -0.75 + (i % 8) * 0.3,
       size: 0.6,
       act: 2,
       emphasis: 0.6,
