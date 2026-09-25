@@ -59,21 +59,24 @@ const LEFT = new Vector3(-1, 0, -0.3).normalize();
 const FEATURE_S = 0.4; // beside him, a step ahead
 const CAMERA_HOME = new Vector3(0, 1.15, 5.8);
 
-// Two rows, alternated line by line so neighbours never overlap.
+// Two rows, alternated line by line so neighbours never overlap. Each row
+// has its own far end, so the queue spreads into two streams: one low along
+// the left of the far path, one high over its right.
 const ROWS = {
-  low: { lateral: 2.85, height: 0.15 },
-  high: { lateral: 2.75, height: 1.42 },
+  low: { lateral: 2.85, height: 0.15, farLateral: 2.6, farHeight: -0.6 },
+  high: { lateral: 2.75, height: 1.42, farLateral: -3.4, farHeight: 2.9 },
 };
 
 // A photo first appears far down the path, like the far end of the paving,
-// and travels towards him at the paving's speed. As it nears him it is
-// selected and resized up from its corner; the selection clears after its
-// line, and it travels on past him.
-const FAR = 14; // how far ahead it appears, in world units along the path
+// and travels towards him. While it is still well ahead of him it is
+// selected and resized up to full size from its corner, so it arrives big;
+// it is selected again while its line is spoken, then travels on past him.
+const FAR = 20; // how far ahead it appears, in world units along the path
+const RESIZE_AT = 6.5; // world units ahead of him where it snaps to size
+const RESIZE_SPAN = 0.35; // world units of travel the resize takes
 // The photos drift a little slower than the paving under his feet.
 const PHOTO_FLOW = 0.7;
-const APPEAR = 0.55; // seconds before its moment the resize starts
-const RESIZE = 0.45; // seconds to grow to full size: a quick, crisp drag
+const APPEAR = 0.55; // seconds before its moment it is selected again
 const SELECTED = 1.5; // seconds after its moment the selection clears
 
 const smooth = (a: number, b: number, x: number) => {
@@ -101,7 +104,7 @@ const lookTarget = new Vector3();
 const glide = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 4);
 
 const momentPose = (m: Moment) => {
-  const { lateral, height } = ROWS[m.row];
+  const { lateral, height, farLateral, farHeight } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
     // Exactly the paving's motion: straight along the path, constant speed.
     const s = FEATURE_S + lane.speed * PHOTO_FLOW * (m.feature - sec);
@@ -110,11 +113,11 @@ const momentPose = (m: Moment) => {
     // A straight line, like the paving: from far ahead above the path on
     // the right of frame to its place beside him on the left, at constant
     // speed. It may pass behind him on the way.
-    const across = Math.min(1, Math.max(0, (s - FEATURE_S) / 11));
+    const across = Math.min(1, Math.max(0, (s - FEATURE_S) / (FAR - 2)));
     pos
-      .set(0, height + (0.55 - height) * across - sinking * 1.1, 0)
+      .set(0, height + (farHeight - height) * across - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
-      .addScaledVector(LEFT, lateral + (0.1 - lateral) * across);
+      .addScaledVector(LEFT, lateral + (farLateral - lateral) * across);
 
     // Square to the viewer, like an image on a canvas.
     toCamera.copy(CAMERA_HOME).sub(pos).normalize();
@@ -127,7 +130,7 @@ const momentPose = (m: Moment) => {
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
         : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec);
-    const pasted = smooth(FAR, FAR - 2.5, s); // fades in from far away
+    const pasted = smooth(FAR, FAR - 3, s); // fades in from far away
     const gone = smooth(-3.4, -2.2, s); // fades as it passes out of frame
 
     out.x = pos.x;
@@ -137,11 +140,21 @@ const momentPose = (m: Moment) => {
     out.ry = (dummy.rotation.y * 180) / Math.PI;
     out.rz = (dummy.rotation.z * 180) / Math.PI;
     out.s = m.size;
-    out.grow = 0.55 + 0.45 * glide((t + APPEAR) / RESIZE);
-    out.sel =
+    // Snaps to full size as it passes RESIZE_AT, well in front of him.
+    const resized = glide((RESIZE_AT - s) / RESIZE_SPAN);
+    out.grow = 0.5 + 0.5 * resized;
+    const resizing =
+      smooth(RESIZE_AT + 0.25, RESIZE_AT, s) *
+      (1 -
+        smooth(
+          RESIZE_AT - RESIZE_SPAN - 0.1,
+          RESIZE_AT - RESIZE_SPAN - 0.6,
+          s,
+        ));
+    const spoken =
       smooth(-APPEAR - 0.25, -APPEAR, t) *
-      (1 - smooth(SELECTED, SELECTED + 0.45, t)) *
-      act;
+      (1 - smooth(SELECTED, SELECTED + 0.45, t));
+    out.sel = Math.max(resizing, spoken) * act;
     out.o = pasted * gone * (1 - sinking * 0.85) * act;
     out.damage = (m.damage ?? 0) * smooth(-1.0, 1.2, t);
     out.murk = (m.murk ?? 0) * smooth(-1.0, 1.4, t);

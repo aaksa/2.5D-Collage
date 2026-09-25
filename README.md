@@ -12,12 +12,11 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
 - **The photo lane.** One image per line travels towards him, a little
-  slower than the paving. It appears far ahead, floating
-  above the far end of the path on the right of frame, and travels in a
-  straight line to its place beside him on the left, passing behind him
-  on the way. There it is selected and resized
-  larger from its corner, with a blue selection frame and handles while its
-  line is spoken, then travels on past him.
+  slower than the paving, in two streams that start far down the path: a
+  high one over the right of the path and a low one on its left. Each
+  photo is selected and snaps to full size from its corner while still well
+  ahead of him, so it arrives big; it is selected again while its line is
+  spoken, then travels on past him on his left.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
