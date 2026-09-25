@@ -107,15 +107,12 @@ const momentPose = (m: Moment) => {
     const s = FEATURE_S + lane.speed * (m.feature - sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
-    // Far ahead, photos float high above the far end of the path, on the
-    // right of frame; as they come forward they glide left and down into
-    // their row beside him, passing above his head, never behind it.
-    const across = smooth(FEATURE_S, FEATURE_S + 8.5, s); // right -> left
-    const lift = smooth(FEATURE_S, FEATURE_S + 2.2, s); // over his head
-    const far = smooth(FEATURE_S + 3.2, FEATURE_S + 9, s); // settles lower
-    const y = height + (2.6 - height) * lift - 2.1 * far;
+    // A straight line, like the paving: from far ahead above the path on
+    // the right of frame to its place beside him on the left, at constant
+    // speed. It may pass behind him on the way.
+    const across = Math.min(1, Math.max(0, (s - FEATURE_S) / 11));
     pos
-      .set(0, y - sinking * 1.1, 0)
+      .set(0, height + (0.55 - height) * across - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
       .addScaledVector(LEFT, lateral + (0.1 - lateral) * across);
 

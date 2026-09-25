@@ -13,8 +13,9 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
 
 - **The photo lane.** One plain colour photograph per line travels towards
   him at his walking pace, like the paving. It appears far ahead, floating
-  above the far end of the path on the right of frame, arcs over his head
-  and settles beside him on the left. There it is selected and resized
+  above the far end of the path on the right of frame, and travels in a
+  straight line to its place beside him on the left, passing behind him
+  on the way. There it is selected and resized
   larger from its corner, with a blue selection frame and handles while its
   line is spoken, then travels on past him.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
