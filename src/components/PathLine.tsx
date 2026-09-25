@@ -22,7 +22,7 @@ export const PathLine: React.FC<{
   const parallaxOffset = useParallax(1);
   const offset = useMemo(() => new Vector3(), []);
 
-  const spacing = 0.96;
+  const spacing = 1.24;
   const start = -5 * spacing;
   const count = 19;
   const span = count * spacing;
@@ -35,8 +35,8 @@ export const PathLine: React.FC<{
     () =>
       new Array(count).fill(0).map((_, i) => {
         const r = (k: string) => random(`slab-${i}-${k}`);
-        const width = 0.8 + r("w") * 0.06;
-        const length = 0.86 + r("l") * 0.04;
+        const width = 1.08 + r("w") * 0.08;
+        const length = 1.02 + r("l") * 0.06;
         const material = createCardMaterial({ map });
         const u = material.uniforms;
         const aspect = width / length;

@@ -251,7 +251,7 @@ export const defaultProps: PremiumCollageProps = {
   highlightColor: "#eee84e",
   subject: {
     model: "models/boss-minion-orc.glb",
-    heading: 84,
+    heading: 45,
     frames: new Array(8)
       .fill(0)
       .map((_, i) => `character/pose-${String(i + 1).padStart(2, "0")}.webp`),

@@ -58,7 +58,7 @@ export const Scene: React.FC<{
     <>
       <CameraRig subject={chest} />
       <Backdrop />
-      <ParticleField range="far" />
+      <ParticleField range="far" count={760} />
       <PathLine
         texture={props.pathTexture}
         origin={feet}
@@ -138,7 +138,7 @@ export const Scene: React.FC<{
         startFrame={Math.round(d * 0.66)}
         endFrame={Math.round(d * 0.9)}
       />
-      <ParticleField range="near" />
+      <ParticleField range="near" count={340} />
       <Renderer />
     </>
   );

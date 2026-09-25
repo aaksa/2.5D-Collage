@@ -98,7 +98,7 @@ export const ParticleField: React.FC<{
       blendDst: OneFactor,
       uniforms: {
         uTime: { value: 0 },
-        uScale: { value: 10 },
+        uScale: { value: 15 },
         uWarm: {
           value: settings.highlight.clone().lerp(settings.accent, 0.25),
         },

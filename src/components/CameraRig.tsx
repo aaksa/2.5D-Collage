@@ -17,27 +17,29 @@ export type CameraMove = {
 // Keys are [progress 0..1, value]. The rhythm: establish (0-15%), a slow
 // push (15-55%), more energy (55-80%), then overshoot a hair and settle.
 export const HERO_MOVE: CameraMove = {
+  // Behind the subject and a little above, looking slightly down, like the
+  // reference: he walks away to the right, three-quarters from behind.
   x: [
-    [0, -0.4],
-    [0.15, -0.34],
-    [0.55, 0.02],
-    [0.8, 0.6],
-    [0.93, 0.83],
-    [1, 0.8],
+    [0, -0.35],
+    [0.15, -0.3],
+    [0.55, -0.05],
+    [0.8, 0.25],
+    [0.93, 0.38],
+    [1, 0.35],
   ],
   y: [
-    [0, 0.05],
-    [0.55, -0.02],
-    [0.88, -0.115],
-    [1, -0.1],
+    [0, 1.3],
+    [0.55, 1.2],
+    [0.88, 1.08],
+    [1, 1.1],
   ],
   z: [
-    [0, 7],
-    [0.15, 6.86],
-    [0.55, 6.05],
-    [0.8, 5.12],
-    [0.94, 4.74],
-    [1, 4.8],
+    [0, 6.6],
+    [0.15, 6.45],
+    [0.55, 5.85],
+    [0.8, 5.3],
+    [0.94, 5.0],
+    [1, 5.05],
   ],
   roll: [
     [0, -0.3],
@@ -54,15 +56,13 @@ export const HERO_MOVE: CameraMove = {
   // Where the lens points: it trails the dolly a little, which reads as a
   // slow pan following the subject.
   targetX: [
-    [0, -0.08],
-    [0.2, -0.07],
-    [0.65, 0.0],
-    [0.95, 0.07],
-    [1, 0.06],
+    [0, -0.05],
+    [0.65, 0.02],
+    [1, 0.08],
   ],
   targetY: [
-    [0, -0.02],
-    [1, -0.14],
+    [0, 0.3],
+    [1, 0.22],
   ],
 };
 
