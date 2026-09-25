@@ -11,13 +11,11 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **The photo lane.** One framed photograph per line floats in on the rat's
-  left, travelling with the paving: it arrives from ahead, rests beside him
-  while its words are spoken, then drifts back and away. Photos alternate
-  between a low and a high row so they never pile up. Each keeps its colour
-  and sits in its own paper frame shape (arch, hexagon, porthole, wedge,
-  ticket...). Act II shows decay in the photographs themselves (drained,
-  muddied, darkened); the bridge on "roboh" slowly tilts and sinks away.
+- **The photo lane.** One plain colour photograph per line travels exactly
+  like the paving slabs, along the path at his walking pace, on his left.
+  Each appears a little ahead of him as if being resized larger in a design
+  tool, from the corner nearest him, with a blue selection frame and handles
+  that stay while its line is spoken.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
@@ -27,9 +25,9 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
   the path itself breaks up under him.
 - **Ending (45 s-):** the camera swings round to the rat's face for "Now the
   Thief Speaks Our Tongue".
-- **Typography.** Each caption is introduced by an index and a drawn rule;
-  its words rise out of a mask one by one, with the emphasised words landing
-  last in an italic serif. Chapter marks guide the two acts.
+- **Typography.** Bold sans captions, right-aligned. Each word rises in
+  dim and lights up white as it is spoken; the key word is selected with a
+  design-tool selection box. The year counter and "Thief" land selected too.
 - **The walk** loops seamlessly: the matching poses in the clip are found
   automatically and the wrap is blended.
 

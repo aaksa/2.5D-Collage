@@ -1,5 +1,6 @@
-import "@fontsource/instrument-serif/400-italic.css";
+import "@fontsource/inter/700.css";
 import { AbsoluteFill, Easing, interpolate } from "remotion";
+import { SelectionFrame } from "./Subtitles";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 // Starts slowly, runs through the decades, then takes its time to settle.
@@ -39,7 +40,7 @@ export const YearCounter: React.FC<{
   const landed = interpolate(sec, [land - 0.2, land + 0.6], [0, 1], clamp);
   const line = interpolate(value, [from, to], [0, 1], clamp);
 
-  const size = 190;
+  const size = 168;
   const places = [3, 2, 1, 0];
   return (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
@@ -59,15 +60,25 @@ export const YearCounter: React.FC<{
         <div
           style={{
             display: "flex",
-            fontFamily: '"Instrument Serif", serif',
-            fontStyle: "italic",
+            position: "relative",
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 700,
             fontSize: size,
             lineHeight: 1,
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.04em",
             color,
             textShadow: "0 2px 30px rgba(0,0,0,0.5)",
           }}
         >
+          {/* When the years land, the number is selected. */}
+          <SelectionFrame
+            progress={interpolate(
+              sec,
+              [land - 0.05, land + 0.8],
+              [0, 1],
+              clamp,
+            )}
+          />
           {places.map((p) => {
             const unit = 10 ** p;
             const digit = Math.floor(n / unit) % 10;
@@ -79,7 +90,7 @@ export const YearCounter: React.FC<{
               <div
                 key={p}
                 style={{
-                  width: "0.56em",
+                  width: "0.6em",
                   height: "1.05em",
                   overflow: "hidden",
                   position: "relative",

@@ -139,6 +139,7 @@ const useAssets = () => {
       document.fonts.load("800 40px Inter"),
       document.fonts.load("500 40px Inter"),
       document.fonts.load("600 40px Inter"),
+      document.fonts.load("700 40px Inter"),
     ]);
     Promise.all([
       Promise.all(srcs.map(async (s) => [s, await loadTexture(s)] as const)),

@@ -1,4 +1,3 @@
-import { random } from "remotion";
 import { Object3D, Vector3 } from "three";
 import { StoryCardProps } from "../components/StoryCard";
 import { Pose, PoseKey } from "../utils/keyframes";
@@ -68,11 +67,12 @@ const ROWS = {
   high: { lateral: 2.25, height: 1.42 },
 };
 
-// How long a photo is on stage around its moment, in seconds.
-const ARRIVE = 1.7;
-const SETTLE = 1.0;
-const LINGER = 1.2;
-const LEAVE = 1.4;
+// A photo is "pasted" a little ahead of him and resized up from its corner,
+// stays selected while its line is spoken, then simply travels on with the
+// paving until it has passed him.
+const APPEAR = 1.2; // seconds before its moment
+const RESIZE = 1.0; // seconds to grow to full size
+const SELECTED = 1.5; // seconds after its moment the selection clears
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -95,43 +95,34 @@ const toCamera = new Vector3();
 const pos = new Vector3();
 const lookTarget = new Vector3();
 
-const momentPose = (m: Moment, seed: string) => {
-  const phase = random(`${seed}-phase`) * Math.PI * 2;
+// A long, soft landing, as when a handle is dragged and released.
+const glide = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 4);
+
+const momentPose = (m: Moment) => {
   const { lateral, height } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
+    // Exactly the paving's motion: straight along the path, constant speed.
     const s = FEATURE_S + lane.speed * (m.feature - sec);
     const t = sec - m.feature;
-    // Arrives rising gently into place; leaves drifting up and back.
-    const arrive = smooth(-ARRIVE, -ARRIVE + SETTLE + 0.8, t);
-    const leave = smooth(LINGER, LINGER + LEAVE, t);
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     pos
-      .set(
-        0,
-        height -
-          (1 - arrive) * 0.28 +
-          leave * 0.22 -
-          sinking * 1.1 +
-          0.04 * Math.sin(sec * 0.45 + phase),
-        0,
-      )
+      .set(0, height - sinking * 1.1, 0)
       .addScaledVector(AXIS, s)
-      .addScaledVector(LEFT, lateral + (1 - arrive) * 1.1 + leave * 0.5);
+      .addScaledVector(LEFT, lateral);
 
-    // Face the viewer, turned a touch towards the path.
-    toCamera.copy(CAMERA_HOME).sub(pos).normalize().addScaledVector(LEFT, -0.2);
+    // Square to the viewer, like an image on a canvas.
+    toCamera.copy(CAMERA_HOME).sub(pos).normalize();
     dummy.position.copy(pos);
     dummy.rotation.set(0, 0, 0);
     dummy.lookAt(lookTarget.copy(pos).add(toCamera));
-    dummy.rotateZ(
-      ((m.tilt + sinking * 11 + 1.6 * Math.sin(sec * 0.3 + phase)) * Math.PI) /
-        180,
-    );
+    dummy.rotateZ((sinking * 11 * Math.PI) / 180);
 
     const act =
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
         : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec);
+    const pasted = smooth(-APPEAR, -APPEAR + 0.2, t);
+    const gone = smooth(-3.4, -2.2, s); // fades as it passes out of frame
 
     out.x = pos.x;
     out.y = pos.y;
@@ -139,10 +130,15 @@ const momentPose = (m: Moment, seed: string) => {
     out.rx = (dummy.rotation.x * 180) / Math.PI;
     out.ry = (dummy.rotation.y * 180) / Math.PI;
     out.rz = (dummy.rotation.z * 180) / Math.PI;
-    out.s = m.size * (0.94 + 0.06 * arrive);
-    out.o = arrive * (1 - leave) * (1 - sinking * 0.85) * act;
-    out.damage = (m.damage ?? 0) * smooth(-1.4, 1.2, t);
-    out.murk = (m.murk ?? 0) * smooth(-1.4, 1.4, t);
+    out.s = m.size;
+    out.grow = 0.32 + 0.68 * glide((t + APPEAR) / RESIZE);
+    out.sel =
+      smooth(-APPEAR, -APPEAR + 0.12, t) *
+      (1 - smooth(SELECTED, SELECTED + 0.45, t)) *
+      act;
+    out.o = pasted * gone * (1 - sinking * 0.85) * act;
+    out.damage = (m.damage ?? 0) * smooth(-1.0, 1.2, t);
+    out.murk = (m.murk ?? 0) * smooth(-1.0, 1.4, t);
     return out;
   };
 };
@@ -151,25 +147,25 @@ export type StoryCardSpec = Omit<StoryCardProps, "texture"> & {
   typeTexture?: string; // a canvas texture made at load time
 };
 
-// Every photo keeps its colour and sits in a paper frame cut to its shape.
+// Plain photographs in colour: no frame, no cut shape.
 const framed = (
   id: string,
   src: string,
-  mask: MaskName,
+  _mask: MaskName,
   moment: Moment,
   extra: Partial<StoryCardSpec> = {},
 ): StoryCardSpec => ({
   id,
   src,
-  mask,
+  mask: "rect",
   treatment: "color",
-  contrast: 1.1,
+  contrast: 1.08,
   brightness: -0.02,
-  border: 0.045,
-  roughness: 0.006,
-  microMotion: 0.6,
+  border: 0,
+  roughness: 0,
+  microMotion: 0.25,
   ...extra,
-  poseAt: momentPose(moment, id),
+  poseAt: momentPose(moment),
 });
 
 const at = (

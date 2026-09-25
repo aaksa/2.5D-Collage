@@ -49,6 +49,10 @@ uniform vec2 uInner;
 uniform float uDamage;
 uniform vec3 uTint;
 uniform float uTintAmount;
+uniform float uPad; // extra plane around the card, in card heights
+uniform float uSelect; // Figma-style selection frame, 0..1
+uniform float uPx; // card-height units per screen pixel
+uniform vec3 uSelColor;
 varying vec2 vUv;
 
 ${noiseGlsl}
@@ -91,7 +95,9 @@ vec4 sampleBlurred(vec2 uv, vec2 r) {
 
 void main() {
   // Work in card-height units so edges and borders are even on all sides.
-  vec2 p = vec2(vUv.x * uAspect, vUv.y);
+  // The plane is padded by uPad so the selection handles can sit outside.
+  vec2 p = vec2(vUv.x * (uAspect + 2.0 * uPad), vUv.y * (1.0 + 2.0 * uPad)) - uPad;
+  vec2 uv = vec2(p.x / uAspect, p.y);
   float d = sdPolygon(p);
   d += (fbm(p * 26.0 + uSeed) - 0.5) * uRough;
   d += (noise(p * 140.0 + uSeed) - 0.5) * uRough * 0.35;
@@ -107,7 +113,7 @@ void main() {
   vec4 tex = vec4(uFill, 1.0);
   if (uHasMap > 0.5) {
     // uInner slides the photo inside its frame: parallax within the card.
-    vec2 iuv = uCrop.xy + uInner + vUv * uCrop.zw;
+    vec2 iuv = uCrop.xy + uInner + uv * uCrop.zw;
     tex = sampleBlurred(iuv, vec2(uBlur / uAspect, uBlur) * uCrop.zw);
   }
 
@@ -121,7 +127,7 @@ void main() {
   } else if (uTreatment < 1.5) {
     col = mix(uDark, uLight, lc);
   } else if (uTreatment < 2.5) {
-    float grit = (hash(vUv * 911.0 + uSeed) - 0.5) * 0.07;
+    float grit = (hash(uv * 911.0 + uSeed) - 0.5) * 0.07;
     col = mix(uDark, uPaperColor, smoothstep(0.15, 0.21, lc + grit));
   } else {
     col = max(vec3(0.0), (col - 0.18) * uContrast + 0.18 + uBrightness);
@@ -130,7 +136,7 @@ void main() {
   // Decay: murky wash, then grime, burn and crushed contrast.
   col = mix(col, vec3(luma(col)) * uTint * 1.6, uTintAmount);
   if (uDamage > 0.0) {
-    vec2 q = vec2(vUv.x * uAspect, vUv.y);
+    vec2 q = vec2(uv.x * uAspect, uv.y);
     float grime = fbm(q * 7.0 + uSeed * 1.7);
     float burn = smoothstep(0.35, 0.75, fbm(q * 2.3 + uSeed) + grime * 0.3);
     col = mix(col, max(vec3(0.0), (col - 0.12) * 1.7), uDamage * 0.7);
@@ -139,7 +145,7 @@ void main() {
     col += scratch * uDamage * 0.25;
   }
 
-  float paper = fbm(vec2(vUv.x * uAspect, vUv.y) * 55.0 + uSeed * 3.0);
+  float paper = fbm(vec2(uv.x * uAspect, uv.y) * 55.0 + uSeed * 3.0);
   col *= 1.0 + (paper - 0.5) * uPaper;
   if (uBorder > 0.0) {
     float b = smoothstep(-uBorder - aa, -uBorder + aa, d);
@@ -148,7 +154,35 @@ void main() {
   col *= uShade;
 
   float a = alpha * uOpacity * (uUseAlpha > 0.5 ? tex.a : 1.0);
-  gl_FragColor = vec4(col * a, a);
+  vec4 base = vec4(col * a, a);
+
+  // Selection frame, as in a design tool: a 1.5px outline, square handles
+  // on the corners and round radius handles just inside them.
+  if (uSelect > 0.001) {
+    vec2 hb = vec2(uAspect, 1.0) * 0.5;
+    vec2 dq = abs(p - hb) - hb;
+    float box = length(max(dq, 0.0)) + min(max(dq.x, dq.y), 0.0);
+    float px = uPx;
+    float lw = 1.0 * px;
+    float line = 1.0 - smoothstep(lw, lw + px, abs(box));
+    float fill = 0.0;
+    float edge = 0.0;
+    for (int i = 0; i < 4; i++) {
+      vec2 c = vec2(i == 1 || i == 3 ? uAspect : 0.0, i >= 2 ? 1.0 : 0.0);
+      vec2 r = abs(p - c);
+      float sq = max(r.x, r.y) - 6.0 * px;
+      fill = max(fill, 1.0 - smoothstep(0.0, px, sq));
+      edge = max(edge, 1.0 - smoothstep(lw, lw + px, abs(sq)));
+      vec2 cc = c + sign(hb - c) * 20.0 * px;
+      float rd = length(p - cc) - 6.0 * px;
+      fill = max(fill, 1.0 - smoothstep(0.0, px, rd));
+      edge = max(edge, 1.0 - smoothstep(lw, lw + px, abs(rd)));
+    }
+    float oa = max(line, fill) * uSelect * uOpacity;
+    vec3 oc = mix(uSelColor, vec3(1.0), fill * (1.0 - edge));
+    base = vec4(oc * oa + base.rgb * (1.0 - oa), oa + base.a * (1.0 - oa));
+  }
+  gl_FragColor = base;
 }
 `;
 
@@ -203,6 +237,10 @@ export const createCardMaterial = (opts: {
       uDamage: { value: 0 },
       uTint: { value: new Color("#6b5a3e") },
       uTintAmount: { value: 0 },
+      uPad: { value: 0 },
+      uSelect: { value: 0 },
+      uPx: { value: 0.002 },
+      uSelColor: { value: new Color("#0d99ff") },
     },
   });
   setBlend(material, "normal");

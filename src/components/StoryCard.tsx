@@ -39,7 +39,11 @@ export type StoryCardProps = {
 const LIGHT = new Vector3(-0.45, 0.6, 0.66).normalize();
 const DOF = 62;
 
+// Room around the card for the selection handles, in card heights.
+const PAD = 0.09;
+
 const tmp = new Vector3();
+const anchor = new Vector3();
 const view = new Vector3();
 const normal = new Vector3();
 
@@ -55,7 +59,7 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
     border = 0,
     roughness = 0.012,
     useAlpha = false,
-    shadow = !useAlpha,
+    shadow = false,
     innerParallax = 0.07,
     microMotion: microAmount = 1,
     depthOfField = 1,
@@ -109,6 +113,8 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
       u.uTreatment.value = TREATMENTS.indexOf(treatment);
       u.uUseAlpha.value = useAlpha ? 1 : 0;
       u.uLight.value.set("#e6e0d4");
+      u.uPad.value = PAD;
+      u.uPaper.value = 0.02;
     }
   }, [
     material,
@@ -142,8 +148,15 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
     const m = micro(t);
     g.position.set(pose.x + m.x * px, pose.y + m.y * px, pose.z);
     g.rotation.set(pose.rx * DEG, pose.ry * DEG, (pose.rz + m.rotation) * DEG);
-    const s = pose.s * m.scale;
-    g.scale.set(s * aspect, s, 1);
+    // Resized from its top-right corner (the one nearest the rat), like
+    // dragging the opposite handle out in a design tool.
+    const full = pose.s * m.scale;
+    const s = full * pose.grow;
+    anchor
+      .set((full - s) * aspect * 0.5, (full - s) * 0.5, 0)
+      .applyEuler(g.rotation);
+    g.position.add(anchor);
+    g.scale.set(s * (aspect + 2 * PAD), s * (1 + 2 * PAD), 1);
 
     // Inner parallax: the photo drifts against the card's position in view,
     // as if it sat deeper than the paper.
@@ -161,6 +174,8 @@ export const StoryCard: React.FC<StoryCardProps> = (props) => {
     const fog = Math.min(1, Math.max(0.3, 1.18 - depth / 26));
     for (const mat of [material, shadowMaterial]) {
       const u = (mat as ShaderMaterial).uniforms;
+      u.uSelect.value = pose.sel;
+      u.uPx.value = 1 / Math.max(cardPx, 1);
       u.uInner.value.set(-ix, -iy);
       u.uBlur.value = blurPx / Math.max(cardPx, 1);
       u.uBias.value = blurPx > 2 ? Math.log2(blurPx) * 0.7 : 0;

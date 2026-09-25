@@ -12,6 +12,8 @@ export type Pose = {
   o: number; // opacity
   damage: number; // 0 pristine .. 1 ruined
   murk: number; // 0 clear .. 1 muddy
+  sel: number; // selection frame, 0..1
+  grow: number; // resize from the top-right corner, 0..1 of full size
 };
 
 export type PoseKey = { t: number } & Partial<Pose>;
@@ -27,6 +29,8 @@ const DEFAULTS: Pose = {
   o: 1,
   damage: 0,
   murk: 0,
+  sel: 0,
+  grow: 1,
 };
 
 const PROPS = Object.keys(DEFAULTS) as (keyof Pose)[];
