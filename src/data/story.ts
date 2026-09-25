@@ -1,6 +1,6 @@
 import { Object3D, Vector3 } from "three";
 import { StoryCardProps } from "../components/StoryCard";
-import { Pose, PoseKey } from "../utils/keyframes";
+import { Pose } from "../utils/keyframes";
 import { MaskName } from "../utils/masks";
 
 // "Now the Thief Speaks Our Tongue". A 54.65 s story told against the
@@ -46,8 +46,6 @@ export const CHAPTERS = [
   },
 ];
 
-const photo = (name: string) => `story/${name}.jpg`;
-
 // ---- The lane --------------------------------------------------------------
 
 // The lane moves at the rat's measured walking speed (set by the scene).
@@ -72,8 +70,10 @@ const ROWS = {
 // selected and resized up from its corner; the selection clears after its
 // line, and it travels on past him.
 const FAR = 14; // how far ahead it appears, in world units along the path
-const APPEAR = 1.6; // seconds before its moment the resize starts
-const RESIZE = 1.2; // seconds to grow to full size
+// The photos drift a little slower than the paving under his feet.
+const PHOTO_FLOW = 0.7;
+const APPEAR = 0.55; // seconds before its moment the resize starts
+const RESIZE = 0.45; // seconds to grow to full size: a quick, crisp drag
 const SELECTED = 1.5; // seconds after its moment the selection clears
 
 const smooth = (a: number, b: number, x: number) => {
@@ -104,7 +104,7 @@ const momentPose = (m: Moment) => {
   const { lateral, height } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
     // Exactly the paving's motion: straight along the path, constant speed.
-    const s = FEATURE_S + lane.speed * (m.feature - sec);
+    const s = FEATURE_S + lane.speed * PHOTO_FLOW * (m.feature - sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     // A straight line, like the paving: from far ahead above the path on
@@ -182,129 +182,57 @@ const at = (
   decay: Partial<Moment> = {},
 ): Moment => ({ feature, row, size, tilt, ...decay });
 
+// One generated image per line, in the order they are spoken.
+const scene = (file: string) => `story/${file}.jpg`;
+
 export const storyCards: StoryCardSpec[] = [
   // Act I
   // "Belanda menjajah Indonesia"
-  framed(
-    "colonial",
-    photo("colonial-facade"),
-    "arch",
-    at(1.5, "low", 1.75, -2),
-  ),
+  framed("ship", scene("01-ship"), "rect", at(0.9, "low", 1.7)),
+  // "350 tahun"
+  framed("map", scene("02-map"), "rect", at(3.9, "high", 1.6)),
   // "gunung masih utuh"
-  framed(
-    "mountain",
-    photo("mountain-forest"),
-    "hexagon",
-    at(6.4, "high", 1.6, 3),
-  ),
+  framed("mountain", scene("03-mountain"), "rect", at(6.2, "low", 1.65)),
   // "samudra masih terbentang luas"
-  framed("ocean", photo("ocean-waves"), "porthole", at(8.4, "low", 1.55, 0)),
+  framed("ocean", scene("04-ocean"), "rect", at(7.9, "high", 1.6)),
   // "sungai-sungai jernih"
-  framed("river", photo("river-bend"), "wedge", at(10.3, "high", 1.5, -3)),
+  framed("river", scene("05-river"), "rect", at(10.1, "low", 1.65)),
   // "dia meninggalkan perkebunan yang terhampar"
-  framed(
-    "plantation",
-    photo("tea-plantation"),
-    "rect",
-    at(12.5, "low", 1.7, 2),
-  ),
+  framed("plantation", scene("06-plantation"), "rect", at(11.9, "high", 1.6)),
   // "bangunan-bangunan yang indah"
-  framed("beautiful", photo("cathedral"), "arch", at(14.7, "high", 1.6, -2)),
+  framed("building", scene("07-building"), "rect", at(14.5, "low", 1.65)),
   // "gedung-gedung yang kokoh"
-  framed("sturdy", photo("brick-building"), "ticket", at(16.4, "low", 1.55, 3)),
+  framed("gedung", scene("08-gedung"), "rect", at(16.2, "high", 1.6)),
   // "jalan-jalan yang kuat"
-  framed(
-    "road",
-    photo("road-straight"),
-    "parallelogram",
-    at(17.9, "high", 1.5, 0),
-  ),
+  framed("road", scene("09-road"), "rect", at(17.9, "low", 1.65)),
   // "jembatan kereta api yang kokoh"
-  framed("bridge", photo("railway-bridge"), "rect", at(19.8, "low", 1.8, -2)),
+  framed("bridge", scene("10-bridge"), "rect", at(19.4, "high", 1.6)),
+  // "Indonesia merdeka 80 tahun"
+  framed("merdeka", scene("11-merdeka"), "rect", at(21.6, "low", 1.8)),
 
   // Act II
   // "gunung gundul"
-  framed(
-    "bald",
-    photo("barren-hills"),
-    "hexagon",
-    at(28.7, "high", 1.6, 3, { damage: 0.35 }),
-  ),
+  framed("gundul", scene("12-gundul"), "rect", at(28.5, "high", 1.6)),
   // "sungai keruh"
-  framed(
-    "murky",
-    photo("industrial-river"),
-    "wedge",
-    at(30.7, "low", 1.55, -2, { murk: 0.9, damage: 0.3 }),
-  ),
+  framed("keruh", scene("13-keruh"), "rect", at(30.6, "low", 1.65)),
   // "Hutang menggunung"
-  framed("debt", "", "ticket", at(32.6, "high", 1.45, 2), {
-    typeTexture: "ledger",
-    treatment: "mono",
-    src: undefined,
-  }),
+  framed("hutang", scene("14-hutang"), "rect", at(32.5, "high", 1.6)),
   // "Bangunan bangunan"
-  framed(
-    "blocks",
-    photo("apartment-blocks"),
-    "notched",
-    at(34.2, "low", 1.6, -3, { damage: 0.4 }),
-  ),
+  framed("bangunan", scene("15-bangunan"), "rect", at(34.1, "low", 1.65)),
   // "hampir tidak ada yang berkualitas"
-  framed(
-    "crowded",
-    photo("crowded-street"),
-    "trapezoid",
-    at(35.9, "high", 1.5, 2, { damage: 0.5 }),
-  ),
+  framed("kualitas", scene("16-kualitas"), "rect", at(35.5, "high", 1.6)),
   // "Jalan jalan mudah rusak"
-  framed(
-    "broken-road",
-    photo("road-straight"),
-    "parallelogram",
-    at(38.0, "high", 1.55, -2, { damage: 0.7 }),
-  ),
+  framed("jalan", scene("17-jalan"), "rect", at(37.7, "low", 1.65)),
   // "jembatan mudah roboh"
   framed(
-    "fallen-bridge",
-    photo("railway-bridge"),
+    "roboh",
+    scene("18-roboh"),
     "rect",
-    at(40.0, "low", 1.75, 1, { damage: 0.6, sink: true }),
+    at(39.9, "high", 1.6, 0, { sink: true }),
   ),
-
-  // "350 tahun": the number rises slowly into place on the right, where the
-  // type lives, and fades the same way.
-  numeral("type-350", 3.3, 5.2, 2.0, 1.25, -3.0, 2.3),
+  // "pertanyaannya adalah, siapa yang penjajah itu"
+  framed("cermin", scene("19-cermin"), "rect", at(42.3, "low", 1.8)),
 ];
-
-function numeral(
-  id: string,
-  from: number,
-  until: number,
-  x: number,
-  y: number,
-  z: number,
-  s: number,
-): StoryCardSpec {
-  const keys: PoseKey[] = [
-    { t: from - 0.8, x, y: y - 0.35, z, s, rz: 1.5, o: 0 },
-    { t: from + 0.9, x, y, z, s, rz: 0, o: 1 },
-    { t: until, x: x + 0.05, y: y + 0.12, z: z - 0.2, s, rz: -0.6, o: 1 },
-    { t: until + 1.3, x: x + 0.08, y: y + 0.4, z: z - 0.6, s, rz: -1, o: 0 },
-  ];
-  return {
-    id,
-    typeTexture: id.replace("type-", ""),
-    treatment: "color",
-    contrast: 1,
-    brightness: 0,
-    useAlpha: true,
-    depthOfField: 0.3,
-    microMotion: 0.5,
-    keys,
-  };
-}
 
 // Words set in colour (and in italic serif) in the subtitles.
 export const EMPHASIS: Record<string, "highlight" | "accent"> = {

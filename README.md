@@ -11,8 +11,8 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **The photo lane.** One plain colour photograph per line travels towards
-  him at his walking pace, like the paving. It appears far ahead, floating
+- **The photo lane.** One image per line travels towards him, a little
+  slower than the paving. It appears far ahead, floating
   above the far end of the path on the right of frame, and travels in a
   straight line to its place beside him on the left, passing behind him
   on the way. There it is selected and resized
@@ -115,7 +115,8 @@ Each entry in `images` looks like:
 
 - `public/photos/`: placeholder photos (see `CREDITS.md`). Replace freely.
 - `public/models/rat-in-suit.glb`: the rat in a suit (textures resized to
-  2048 px). `public/story/`: story photos (see `CREDITS.md`).
+  2048 px). `public/story/`: the story images, `01-ship` to `19-cermin`,
+  one per narrated line.
 - `public/models/boss-minion-orc.glb`: "Boss Minion Orc" by Lowpolyprincipal,
   CC BY 4.0. Credit the author when publishing (see `public/models/CREDITS.md`).
 - `public/character/`: the walk cycle cut from the reference clip by
