@@ -36,9 +36,14 @@ Rendering uses WebGL. On a machine with a GPU the default (`angle`, set in
   - soft shadow, blend modes
   - depth-of-field blur by distance from the focus plane
   - entrances that layer opacity, depth, rise, rotation, scale and blur
-- **Subject** (`components/SubjectPlane.tsx`, `shaders/subject.ts`). A PNG/WebP
-  sequence animated on fours, with crushed blacks, posterised tritone,
-  midtone halftone, edges that boil from pose to pose, and a glow.
+- **Subject.** By default, a rigged 3D character (`components/SubjectModel.tsx`)
+  walks in the centre of frame. Its animation plays on twos, driven by the
+  timeline, and its lit material is screenprinted into four inks (black, red,
+  orange, yellow) with halftone. An HDR outline blooms into the yellow glow.
+  The path slides at the speed measured from its planted foot, so the feet
+  don't skate. Set `subject.model` to any rigged GLB with a walk animation.
+  Without a model, the reference cut-out sprite sequence is used instead
+  (`components/SubjectPlane.tsx`).
 - **Transition** (`components/TransitionCard.tsx`). A print sweeps across just
   in front of the lens as a spatial wipe, uncovering the title.
 - **Motion blur** (`components/Renderer.tsx`). The scene is re-posed at 12
@@ -74,5 +79,7 @@ Each entry in `images` looks like:
 ## Assets
 
 - `public/photos/`: placeholder photos (see `CREDITS.md`). Replace freely.
+- `public/models/boss-minion-orc.glb`: "Boss Minion Orc" by Lowpolyprincipal,
+  CC BY 4.0. Credit the author when publishing (see `public/models/CREDITS.md`).
 - `public/character/`: the walk cycle cut from the reference clip by
   `scripts/extract_character.py` (see its docstring).

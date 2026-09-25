@@ -129,7 +129,7 @@ export const ImageCard: React.FC<CardProps> = (props) => {
       u.uTreatment.value = TREATMENTS.indexOf(treatment);
       u.uUseAlpha.value = useAlpha ? 1 : 0;
       u.uDark.value.copy(new Color("#0b0a09"));
-      u.uLight.value.copy(settings.highlight).lerp(new Color("#ffffff"), 0.35);
+      u.uLight.value.set("#e6e0d4");
     }
     setBlend(material, blend);
   }, [

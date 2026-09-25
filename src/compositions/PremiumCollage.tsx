@@ -12,6 +12,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { CanvasTexture, Color, SRGBColorSpace, Texture } from "three";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Scene } from "../components/Scene";
 import {
   SceneProvider,
@@ -76,11 +77,19 @@ const makeTitle = async (title: string, subtitle: string) => {
   return tex;
 };
 
+const loadModel = (src: string) =>
+  new Promise<GLTF>((ok, fail) =>
+    new GLTFLoader().load(resolve(src), ok, undefined, () =>
+      fail(new Error(`Could not load ${src}`)),
+    ),
+  );
+
 const useAssets = (props: PremiumCollageProps) => {
   const [handle] = useState(() => delayRender("Loading collage assets"));
   const [assets, setAssets] = useState<{
     textures: Map<string, Texture>;
     title: Texture | null;
+    model: GLTF | null;
   } | null>(null);
 
   useEffect(() => {
@@ -95,9 +104,10 @@ const useAssets = (props: PremiumCollageProps) => {
     Promise.all([
       Promise.all(srcs.map(async (s) => [s, await loadTexture(s)] as const)),
       makeTitle(props.title, props.subtitle),
+      props.subject.model ? loadModel(props.subject.model) : null,
     ])
-      .then(([entries, title]) => {
-        setAssets({ textures: new Map(entries), title });
+      .then(([entries, title, model]) => {
+        setAssets({ textures: new Map(entries), title, model });
         continueRender(handle);
       })
       .catch((err) => cancelRender(err));
@@ -138,7 +148,11 @@ export const PremiumCollage: React.FC<PremiumCollageProps> = (props) => {
           camera={{ fov: 42, near: 0.05, far: 200, position: [-0.4, 0.05, 7] }}
         >
           <SceneProvider value={state}>
-            <Scene props={props} titleTexture={assets.title} />
+            <Scene
+              props={props}
+              titleTexture={assets.title}
+              model={assets.model}
+            />
           </SceneProvider>
         </ThreeCanvas>
       ) : null}

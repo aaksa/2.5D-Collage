@@ -54,11 +54,11 @@ export const HERO_MOVE: CameraMove = {
   // Where the lens points: it trails the dolly a little, which reads as a
   // slow pan following the subject.
   targetX: [
-    [0, -0.25],
-    [0.2, -0.22],
-    [0.65, -0.05],
-    [0.95, 0.12],
-    [1, 0.11],
+    [0, -0.08],
+    [0.2, -0.07],
+    [0.65, 0.0],
+    [0.95, 0.07],
+    [1, 0.06],
   ],
   targetY: [
     [0, -0.02],

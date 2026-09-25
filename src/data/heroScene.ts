@@ -35,6 +35,10 @@ export const premiumCollageSchema = z.object({
   accentColor: zColor(),
   highlightColor: zColor(),
   subject: z.object({
+    // A rigged, animated glTF/GLB (its first animation loops). When set it
+    // replaces the sprite sequence below.
+    model: z.string().optional(),
+    heading: z.number(), // degrees; 90 walks straight to the right
     frames: z.array(z.string()).min(1),
     holdFrames: z.number().int().min(1),
     x: z.number(),
@@ -246,11 +250,13 @@ export const defaultProps: PremiumCollageProps = {
   accentColor: "#d8261d",
   highlightColor: "#eee84e",
   subject: {
+    model: "models/boss-minion-orc.glb",
+    heading: 84,
     frames: new Array(8)
       .fill(0)
       .map((_, i) => `character/pose-${String(i + 1).padStart(2, "0")}.webp`),
     holdFrames: 4,
-    x: -0.55,
+    x: 0,
     z: 0,
     height: 2.05,
   },

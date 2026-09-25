@@ -130,7 +130,7 @@ export const Renderer: React.FC = () => {
     const rendering = getRemotionEnvironment().isRendering;
     blur.frame = frameRef.current;
     blur.shutter = motionBlurAmount;
-    blur.samples = motionBlurAmount > 0 ? (rendering ? 12 : 2) : 1;
+    blur.samples = motionBlurAmount > 0 ? (rendering ? 10 : 2) : 1;
     finish.uniforms.uFrame.value = frameRef.current;
     composer.render();
   }, 1);

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Texture, Vector3 } from "three";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import characterMeta from "../../public/character/meta.json";
 import { PremiumCollageProps } from "../data/heroScene";
 import { Backdrop } from "./Backdrop";
@@ -9,17 +10,22 @@ import { ParticleField } from "./ParticleField";
 import { PathLine } from "./PathLine";
 import { Renderer } from "./Renderer";
 import { useScene } from "./SceneContext";
+import { SubjectModel, measureWalkSpeed } from "./SubjectModel";
 import { SubjectPlane } from "./SubjectPlane";
 import { TransitionCard } from "./TransitionCard";
 
 const GROUND = -1.05;
-const HEADING = 50; // the figure walks right and away, matching his 3/4 view
-const WALK_SPEED = 0.42; // tuned to his stride so the feet don't skate
+const FPS = 30;
+// The sprite walker walks right and away (his 3/4 view); this pace was
+// tuned by eye to his stride.
+const SPRITE_HEADING = 50;
+const SPRITE_SPEED = 0.42;
 
 export const Scene: React.FC<{
   props: PremiumCollageProps;
   titleTexture: Texture | null;
-}> = ({ props, titleTexture }) => {
+  model: GLTF | null;
+}> = ({ props, titleTexture, model }) => {
   const { settings } = useScene();
   const d = settings.duration;
   const feet = useMemo(
@@ -35,6 +41,18 @@ export const Scene: React.FC<{
       ),
     [props.subject.x, props.subject.z, props.subject.height],
   );
+  // A 3D walker sets the pace itself: the path moves exactly as fast as his
+  // planted foot slides back, so the feet never skate.
+  const walk = useMemo(() => {
+    if (!model) {
+      return { heading: SPRITE_HEADING, speed: SPRITE_SPEED };
+    }
+    const { speed, height } = measureWalkSpeed(model);
+    return {
+      heading: props.subject.heading,
+      speed: (speed * props.subject.height) / height,
+    };
+  }, [model, props.subject.heading, props.subject.height]);
 
   return (
     <>
@@ -44,23 +62,43 @@ export const Scene: React.FC<{
       <PathLine
         texture={props.pathTexture}
         origin={feet}
-        heading={HEADING}
-        speed={WALK_SPEED}
-        fps={30}
+        heading={walk.heading}
+        speed={walk.speed}
+        fps={FPS}
       />
       {props.images.map((image, i) => (
         <ImageCard key={`${i}-${image.src}`} id={`card-${i}`} {...image} />
       ))}
-      <SubjectPlane
-        frames={props.subject.frames}
-        holdFrames={props.subject.holdFrames}
-        x={props.subject.x}
-        ground={GROUND}
-        z={props.subject.z}
-        height={props.subject.height}
-        spriteGroundY={characterMeta.groundY}
-        spritePersonHeight={characterMeta.personHeight}
-      />
+      {model ? (
+        <>
+          {/* Graphic lighting: a soft key from camera-left and a hard rim
+              from behind, which the screenprint turns into yellow edges. */}
+          <ambientLight intensity={0.3} />
+          <directionalLight position={[-3, 4, 6]} intensity={1.5} />
+          <directionalLight position={[4, 3, -5]} intensity={2.6} />
+          <SubjectModel
+            gltf={model}
+            x={props.subject.x}
+            ground={GROUND}
+            z={props.subject.z}
+            height={props.subject.height}
+            heading={props.subject.heading}
+            stepFrames={2}
+            fps={FPS}
+          />
+        </>
+      ) : (
+        <SubjectPlane
+          frames={props.subject.frames}
+          holdFrames={props.subject.holdFrames}
+          x={props.subject.x}
+          ground={GROUND}
+          z={props.subject.z}
+          height={props.subject.height}
+          spriteGroundY={characterMeta.groundY}
+          spritePersonHeight={characterMeta.personHeight}
+        />
+      )}
       {/* A single accent shard: the one saturated note besides the figure. */}
       <ImageCard
         id="accent"
@@ -81,8 +119,8 @@ export const Scene: React.FC<{
         <ImageCard
           id="title"
           texture={titleTexture}
-          x={props.subject.x + 1.75}
-          y={0.5}
+          x={props.subject.x + 2.35}
+          y={0.72}
           z={-0.9}
           scale={0.74}
           rotationY={-6}
