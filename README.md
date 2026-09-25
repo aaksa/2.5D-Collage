@@ -1,51 +1,78 @@
 # 2.5D Collage
 
-A 15-second Remotion film (1920×1080, 30 fps). The red/yellow cut-out walker
-from the reference walks a single line of paving slabs, seen from the side.
-The camera tracks him through black space full of floating photographs and
-drifting dust.
-
-- **Real 2.5D camera.** One pinhole camera cranes down, pushes in and trucks
-  alongside the walker. Photos and slabs are true perspective planes (a CSS
-  `matrix3d` per quad), so everything parallaxes by its actual depth.
-- **Photos with parallax inside the frame.** Each print's image slides
-  within its torn edge as the viewing angle changes, and a sheen sweeps across
-  it.
-- **Depth of field.** Photos, slabs and particles blur by their distance from
-  the focus plane. Near dust turns into soft bokeh.
-- **Finish.** Stop-motion walker (on fours) against smooth camera motion, a
-  warm light pool at his feet, light shafts, grain, vignette, 2.35:1
-  letterbox and editorial titles.
+One polished hero scene: an editorial cut-out collage in real 3D, built with
+Remotion, Three.js, React Three Fiber and `@remotion/three`. The screenprinted
+walker from the reference moves through floating photographic prints while a
+weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
+30 fps, and the duration is configurable.
 
 ## Commands
 
 ```console
 npm i
-npm run dev                                   # Remotion Studio preview
-npx remotion render Collage out/collage.mp4   # render the video
+npm run dev                                                  # Studio, with live props
+npx remotion render PremiumCollage out/premium-collage.mp4   # final render
 ```
 
-## Customising
+Rendering uses WebGL. On a machine with a GPU the default (`angle`, set in
+`remotion.config.ts`) is fastest. On a server without one, add `--gl=swangle`.
 
-Everything below is a prop, editable in Studio or in `src/Root.tsx`:
+## How it's built
 
-- `photos`: the floating prints. The defaults in `public/photos/` are
-  placeholders (see `public/photos/CREDITS.md`). Use any number of your own;
-  they are shown in black and white.
-- `pathTexture`: the image on the paving slabs.
-- `title`, `subtitle`, `chapter`: the typography. An empty `title` hides the
-  title cards.
-- `letterbox`: bar height in px (131 gives 2.35:1, 0 turns it off).
+- **True 3D space.** Flat assets are planes at real depths: foreground
+  +1..+2.5, subject 0, midground -1..-6, background -9..-16, dust -20 and
+  beyond. Parallax comes from the camera moving through that space.
+- **Camera with mass** (`components/CameraRig.tsx`). Keyframed dolly, truck,
+  rise, roll and FOV (42° to 38°), interpolated with velocity-continuous
+  curves (`utils/easing.ts`). It establishes, pushes slowly, gathers energy,
+  overshoots a hair and settles. Layered low-frequency noise gives it a
+  stabilised-dolly feel, never game shake.
+- **Micro-motion** (`hooks/useMicroMotion.ts`). Every object drifts a few
+  pixels, fractions of a degree and fractions of a percent in scale, on its
+  own mix of frequencies and phases.
+- **Cards** (`components/ImageCard.tsx`, `shaders/card.ts`):
+  - polygon masks with torn, noisy edges; crop; border
+  - mono, duotone, threshold or colour treatment; paper texture
+  - soft shadow, blend modes
+  - depth-of-field blur by distance from the focus plane
+  - entrances that layer opacity, depth, rise, rotation, scale and blur
+- **Subject** (`components/SubjectPlane.tsx`, `shaders/subject.ts`). A PNG/WebP
+  sequence animated on fours, with crushed blacks, posterised tritone,
+  midtone halftone, edges that boil from pose to pose, and a glow.
+- **Transition** (`components/TransitionCard.tsx`). A print sweeps across just
+  in front of the lens as a spatial wipe, uncovering the title.
+- **Motion blur** (`components/Renderer.tsx`). The scene is re-posed at 12
+  moments across a 180° shutter and the renders are averaged. Fast foreground
+  motion smears; the stop-motion subject stays crisp.
+- **Finish** (`shaders/post.ts`). Highlight-only bloom, then per-frame
+  monochrome grain, a faint halftone, lens fringing and a small vignette.
 
-## Where things live
+## Props (editable in Studio)
 
-- `src/Collage/camera.ts`: camera move, walking speed, projection, depth of field
-- `src/Collage/scene.ts`: seeded layout of photos, slabs and dust
-- `src/Collage/homography.ts`: maps world-space quads to CSS `matrix3d`
-- `src/Collage/Titles.tsx`: title and letterbox typography
+`backgroundColor`, `accentColor`, `highlightColor`, `subject`, `images`,
+`transitionImage`, `pathTexture`, `title`, `subtitle`, `durationInSeconds`,
+`cameraIntensity`, `parallaxIntensity`, `grainAmount`, `microMotionAmount` and
+`motionBlurAmount`.
 
-## Re-cutting the walker
+Each entry in `images` looks like:
 
-`public/character/` holds the eight-pose walk cycle cut from the reference
-clip by `scripts/extract_character.py`. See the docstring there for how to
-regenerate it.
+```ts
+{
+  src: "photos/03-church.jpg",
+  x: -4.5, y: 0.45, z: -3,     // world units; the subject stands at z = 0
+  scale: 3,                     // card height
+  rotationX: 0, rotationY: 10, rotationZ: 0,   // degrees
+  parallax: 1.05,               // 1 = physically static; <1 calmer, >1 stronger
+  mask: "kite",                 // rect | shard | kite | triangle | sliver
+  treatment: "mono",            // mono | duotone | threshold | color
+  crop: [0, 0, 1, 1], border: 0.04, shadow: true,
+  brightness: 0, contrast: 1.25, microMotion: 1,
+  enterFrame: 6, exitFrame: undefined,
+}
+```
+
+## Assets
+
+- `public/photos/`: placeholder photos (see `CREDITS.md`). Replace freely.
+- `public/character/`: the walk cycle cut from the reference clip by
+  `scripts/extract_character.py` (see its docstring).

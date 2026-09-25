@@ -9,4 +9,6 @@ import { enableTailwind } from '@remotion/tailwind-v4';
 Config.setRspack(true);
 Config.setVideoImageFormat("jpeg");
 Config.setOverwriteOutput(true);
+// WebGL scene: ANGLE uses the GPU. On a machine without one, pass --gl=swangle.
+Config.setChromiumOpenGlRenderer("angle");
 Config.overrideBundlerConfig(enableTailwind);
