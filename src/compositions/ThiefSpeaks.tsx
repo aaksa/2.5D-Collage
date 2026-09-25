@@ -22,6 +22,7 @@ import {
   createSceneState,
 } from "../components/SceneContext";
 import { StoryScene } from "../components/StoryScene";
+import { YearCounter } from "../components/YearCounter";
 import {
   ChapterMarks,
   ClosingLine,
@@ -32,6 +33,7 @@ import {
 import {
   CHAPTERS,
   EMPHASIS,
+  YEARS,
   FACE_AT,
   STORY_DURATION,
   THIEF_LINE_AT,
@@ -155,11 +157,7 @@ const useAssets = () => {
       .then(([entries, model, srt]) => {
         setAssets({
           textures: new Map(entries),
-          typeTextures: {
-            "350": numeral("350"),
-            "80": numeral("80"),
-            ledger: ledger(),
-          },
+          typeTextures: { "350": numeral("350"), ledger: ledger() },
           model,
           cues: parseSrt(srt),
         });
@@ -219,6 +217,17 @@ export const ThiefSpeaks: React.FC = () => {
             </SceneProvider>
           </ThreeCanvas>
           <ChapterMarks chapters={CHAPTERS} frame={frame} fps={fps} />
+          <YearCounter
+            frame={frame}
+            fps={fps}
+            from={YEARS.from}
+            to={YEARS.to}
+            start={YEARS.start}
+            land={YEARS.land}
+            until={YEARS.until}
+            color="#f4f1ea"
+            landColor={COLORS.highlight}
+          />
           <Subtitles
             cues={assets.cues}
             frame={frame}

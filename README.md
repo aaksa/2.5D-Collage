@@ -11,13 +11,14 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **The carousel.** The photos ride a slow floating ring that turns around
-  the rat's walking line. They drift in from far ahead, pass beside him and
-  slip away, so the world keeps moving as he walks. Each photo is featured
-  (larger, brighter, sharper) on its line; quieter ambient cards keep the
-  ring full.
+- **The carousel.** The photos ride a slow drum turning on the rat's left
+  only, carried from far behind towards the lens as he walks, never in front
+  of him. They keep their colour and each has its own cut: arch, porthole,
+  hexagon, ticket, wedge, chevron, notched print and more. Each is featured
+  (larger, brighter, sharper) on its line. The right of frame holds the type.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
-  for "Indonesia merdeka 80 tahun".
+  for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
+  1945 to 2025.
 - **A soft blackout** on the silence at 26 s.
 - **Act II (26.5-44 s):** the same places come back aged: the mountain
   burnt bare, the river muddied, ledger pages flooding the ring, buildings

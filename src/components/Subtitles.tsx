@@ -52,7 +52,7 @@ const Word: React.FC<{
   );
   const fade = interpolate(
     frame,
-    [inAt + 4, inAt + duration * 0.9],
+    [inAt + 3, inAt + duration * 0.7],
     [0, 1],
     clamp,
   );
@@ -141,9 +141,9 @@ export const Subtitles: React.FC<{
             key={`${cue.start}-${cue.text}`}
             style={{
               position: "absolute",
-              left: 120,
-              bottom: 118,
-              maxWidth: 1120,
+              left: 1100,
+              bottom: 116,
+              maxWidth: 720,
             }}
           >
             <div
@@ -186,7 +186,7 @@ export const Subtitles: React.FC<{
                 );
                 const at =
                   tone && hasPlain
-                    ? inAt + 6 + words.length * 3.2
+                    ? inAt + 4 + words.length * 2.2
                     : inAt + 6 + plain++ * 3.2;
                 return (
                   <Word
@@ -194,7 +194,7 @@ export const Subtitles: React.FC<{
                     frame={frame}
                     inAt={at}
                     outAt={outAt + i * 1.5}
-                    duration={tone ? 38 : 30}
+                    duration={tone ? 32 : 30}
                     style={
                       tone
                         ? {
@@ -238,7 +238,7 @@ export const ChapterMarks: React.FC<{
             key={c.numeral}
             style={{
               position: "absolute",
-              left: 120,
+              left: 1100,
               top: 92,
               display: "flex",
               alignItems: "center",

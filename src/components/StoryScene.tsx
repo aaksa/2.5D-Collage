@@ -47,7 +47,7 @@ export const storyGrade = (sec: number): Grade => {
   ];
   return {
     exposure: Math.max(0.02, (1 - dark * 0.97) * (1 - end) * (1 - intro)),
-    saturation: mix(mix(1, 0.78, act2), 1.05, face),
+    saturation: mix(mix(1, 0.9, act2), 1.05, face),
     tint,
     vignette: mix(mix(0.28, 0.42, act2), 0.46, face),
     grain: mix(1, 1.45, act2),

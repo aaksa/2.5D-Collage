@@ -16,7 +16,7 @@ export const TREATMENTS = ["mono", "duotone", "threshold", "color"] as const;
 export type Treatment = (typeof TREATMENTS)[number];
 export type BlendMode = "normal" | "screen" | "multiply" | "add";
 
-export const MAX_VERTS = 8;
+export const MAX_VERTS = 12;
 
 // A printed photo: polygon mask with torn edges, crop, colour treatment,
 // paper texture, optional border and a built-in blur for depth of field.
