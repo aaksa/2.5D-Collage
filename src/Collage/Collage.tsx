@@ -1,92 +1,141 @@
-import { zColor } from "@remotion/zod-types";
 import { useMemo } from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
-import { z } from "zod";
 import {
-  FPS,
-  WALKER_DISTANCE,
-  cameraAt,
-  project,
-  HEIGHT,
-  WIDTH,
-} from "./camera";
-import { Floor } from "./Floor";
-import { PhotoShard } from "./PhotoShard";
-import { makeShards } from "./scene";
-import { Starfield } from "./Starfield";
-import { Walker, WalkerFilter } from "./Walker";
+  AbsoluteFill,
+  interpolate,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
+import { z } from "zod";
+import { Backdrop, Finish, LightPool, LightShafts } from "./Atmosphere";
+import { FPS, cameraAt, project, walkerAt } from "./camera";
+import { PathSlab, slabQuad } from "./PathSlab";
+import { Particles } from "./Particles";
+import { PhotoCard, cardQuad } from "./PhotoCard";
+import { makeCards, makeSlabs } from "./scene";
+import { Titles } from "./Titles";
+import { Walker } from "./Walker";
 
 export const collageSchema = z.object({
   photos: z.array(z.string()).min(1),
-  floorTexture: z.string(),
-  walkerColors: z.array(zColor()).min(2),
-  glowColor: zColor(),
+  pathTexture: z.string(),
+  title: z.string(),
+  subtitle: z.string(),
+  chapter: z.string(),
+  // Height of each letterbox bar in px; 131 gives a 2.35:1 picture.
+  letterbox: z.number().min(0).max(300),
 });
 
 export type CollageProps = z.infer<typeof collageSchema>;
 
 export const Collage: React.FC<CollageProps> = ({
   photos,
-  floorTexture,
-  walkerColors,
-  glowColor,
+  pathTexture,
+  title,
+  subtitle,
+  chapter,
+  letterbox,
 }) => {
   const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const t = frame / FPS;
   const cam = cameraAt(frame);
-  const shards = useMemo(() => makeShards(photos.length), [photos.length]);
+  const cards = useMemo(() => makeCards(photos.length), [photos.length]);
+  const slabs = useMemo(makeSlabs, []);
 
-  // The walker keeps pace with the camera; the camera sways around him a bit.
-  const walker = project(cam, cam.x * 0.8, 0, cam.z + WALKER_DISTANCE);
+  const walkerPos = walkerAt(frame);
+  const walker = project(cam, walkerPos);
 
-  // Paint far to near so closer shards overlap farther ones and the walker.
-  const layers = [
-    ...shards.map((shard) => ({
-      depth: shard.z - cam.z,
-      node: (() => {
-        const p = project(cam, shard.x, shard.y, shard.z);
-        const reach = Math.max(shard.width, shard.height) * p.scale;
-        if (
-          p.depth < 0.5 ||
-          p.x + reach < 0 ||
-          p.x - reach > WIDTH ||
-          p.y + reach < 0 ||
-          p.y - reach > HEIGHT
-        ) {
-          return null;
-        }
-        return (
-          <PhotoShard
-            key={`shard-${shard.id}`}
-            shard={shard}
-            p={p}
-            src={photos[shard.photo]}
-            time={frame / FPS}
+  // Paint everything far to near. The walker gets a small bias so the slab
+  // he stands on is drawn beneath him.
+  const layers: { depth: number; node: React.ReactNode }[] = [];
+  for (const slab of slabs) {
+    const quad = slabQuad(slab, cam);
+    if (quad) {
+      layers.push({
+        depth: quad.depth + 1.5,
+        node: (
+          <PathSlab
+            key={`slab-${slab.id}`}
+            slab={slab}
+            quad={quad}
+            cam={cam}
+            walker={walkerPos}
+            texture={pathTexture}
           />
-        );
-      })(),
-    })),
-    {
-      depth: WALKER_DISTANCE,
-      node: <Walker key="walker" p={walker} frame={frame} glow={glowColor} />,
-    },
-  ].sort((a, b) => b.depth - a.depth);
+        ),
+      });
+    }
+  }
+  for (const card of cards) {
+    const quad = cardQuad(card, cam, t);
+    if (quad) {
+      layers.push({
+        depth: quad.depth,
+        node: (
+          <PhotoCard
+            key={`card-${card.id}`}
+            card={card}
+            quad={quad}
+            cam={cam}
+            src={photos[card.photo]}
+          />
+        ),
+      });
+    }
+  }
+  layers.push({
+    depth: walker.depth,
+    node: (
+      <div key="walker">
+        <LightPool walker={walker} />
+        <Walker p={walker} frame={frame} />
+      </div>
+    ),
+  });
+  layers.sort((a, b) => b.depth - a.depth);
 
-  const fade = interpolate(frame, [0, 12], [0, 1], {
+  const fadeIn = interpolate(frame, [0, 1.2 * FPS], [0, 1], {
     extrapolateRight: "clamp",
   });
+  const fadeOut = interpolate(
+    frame,
+    [durationInFrames - 3.2 * FPS, durationInFrames - 2.2 * FPS],
+    [1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
-      <WalkerFilter colors={walkerColors} />
-      <AbsoluteFill style={{ opacity: fade }}>
-        <Starfield cam={cam} />
-        <Floor cam={cam} texture={floorTexture} />
-        {layers.map((layer) => layer.node)}
+      <AbsoluteFill style={{ opacity: fadeIn * fadeOut }}>
+        {/* A touch of roll and overscan, like a camera operator's hand. */}
+        <AbsoluteFill
+          style={{ transform: `rotate(${cam.roll}deg) scale(1.035)` }}
+        >
+          <Backdrop walker={walker} />
+          <Particles cam={cam} t={t} layer="behind" />
+          {layers.map((layer) => layer.node)}
+          <Particles cam={cam} t={t} layer="front" />
+          <LightShafts t={t} />
+        </AbsoluteFill>
       </AbsoluteFill>
+      <Finish frame={frame} letterbox={letterbox} />
+      <Titles
+        frame={frame}
+        durationInFrames={durationInFrames}
+        title={title}
+        subtitle={subtitle}
+        chapter={chapter}
+        letterbox={letterbox}
+      />
       <AbsoluteFill
         style={{
-          background:
-            "radial-gradient(ellipse at 50% 55%, transparent 55%, rgba(0,0,0,0.55) 100%)",
+          backgroundColor: "#000",
+          opacity: interpolate(
+            frame,
+            [durationInFrames - 14, durationInFrames - 1],
+            [0, 1],
+            { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+          ),
         }}
       />
     </AbsoluteFill>

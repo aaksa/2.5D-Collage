@@ -1,8 +1,7 @@
 import "./index.css";
 import { Composition } from "remotion";
-import { FPS, HEIGHT, WIDTH } from "./Collage/camera";
+import { DURATION, FPS, HEIGHT, WIDTH } from "./Collage/camera";
 import { Collage, collageSchema } from "./Collage/Collage";
-import { WALKER_FRAMES } from "./Collage/Walker";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -11,26 +10,36 @@ export const RemotionRoot: React.FC = () => {
       id="Collage"
       component={Collage}
       schema={collageSchema}
-      durationInFrames={WALKER_FRAMES}
+      durationInFrames={DURATION}
       fps={FPS}
       width={WIDTH}
       height={HEIGHT}
       defaultProps={{
-        // Swap these for your own photos in public/photos/.
+        // Placeholder photos (see public/photos/CREDITS.md). Swap in your own;
+        // any number works, and they are shown in black and white.
         photos: [
-          "photos/photo-01.svg",
-          "photos/photo-02.svg",
-          "photos/photo-03.svg",
-          "photos/photo-04.svg",
-          "photos/photo-05.svg",
-          "photos/photo-06.svg",
-          "photos/photo-07.svg",
-          "photos/photo-08.svg",
+          "photos/01-skyline.jpg",
+          "photos/02-ferry.jpg",
+          "photos/03-church.jpg",
+          "photos/04-bridge.jpg",
+          "photos/05-window.jpg",
+          "photos/06-dusk.jpg",
+          "photos/07-shore.jpg",
+          "photos/08-waves.jpg",
+          "photos/09-lone-tree.jpg",
+          "photos/10-fog-forest.jpg",
+          "photos/11-mountain.jpg",
+          "photos/12-alpine-town.jpg",
+          "photos/13-lake.jpg",
+          "photos/14-palms.jpg",
+          "photos/15-street.jpg",
+          "photos/16-dunes.jpg",
         ],
-        floorTexture: "photos/pavement.svg",
-        // Darkest to lightest.
-        walkerColors: ["#2a0406", "#b5141d", "#e0302a", "#e8d93a", "#f3f57a"],
-        glowColor: "#ffe94a",
+        pathTexture: "photos/pavement.svg",
+        title: "Between Places",
+        subtitle: "A walk through what remains",
+        chapter: "Chapter One — The Walk",
+        letterbox: 131,
       }}
     />
   );
