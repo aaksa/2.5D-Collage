@@ -16,9 +16,10 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
   neighbours, and the whole queue glides together at one shared speed that
   eases smoothly from line to line, so each photo reaches him on its cue.
   The queue waits dimmed and brightens as it nears him; each photo resizes
-  up from its corner with a blue selection frame once it is next in line,
-  so it is already big in front of him, is selected again while its line is
-  spoken, then travels on past him. The photos play a little slower than
+  up from its corner once it is next in line, so it is already big in front
+  of him, then travels on past him. Only one photo carries the blue
+  selection frame at a time: it passes to the next photo just as the
+  current one comes level with him. The photos play a little slower than
   the narration (Act I 15%, Act II 10%), so Act I runs on through the year
   counter and its last photo lands as it reaches 2025.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back

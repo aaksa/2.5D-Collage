@@ -74,9 +74,10 @@ const ROWS = { low: STREAM, high: STREAM };
 
 // A photo first appears far down the path, like the far end of the paving,
 // and travels towards him. Once it is next in line, right in front of him,
-// it is selected and resized up to full size from its corner, so it is
-// already big while it walks in; it is selected again while its line is
-// spoken, then travels on past him.
+// it is resized up to full size from its corner, so it is already big while
+// it walks in. Only one photo is selected at a time: the one whose line is
+// spoken, until the next one takes the selection over. Then it travels on
+// past him.
 const FAR = 48; // how far ahead it appears, in world units along the path
 const RESIZE_AT = 6.2; // world units ahead of him where it grows to size
 const RESIZE_SPAN = 1.6; // world units of travel the resize takes: unhurried
@@ -155,8 +156,29 @@ const travelled = (feature: number, sec: number) => {
   }
   return conveyors[a](sec);
 };
-const APPEAR = 0.55; // seconds before its moment it is selected again
-const SELECTED = 2.0; // seconds after its moment the selection clears
+const LEAD = 1.2; // seconds before the first photo of an act is selected
+const HANDOVER = 0.3; // seconds the selection takes to pass along
+// How far into the gap after its cue a photo hands the selection on: just
+// as it comes level with him, so the next one is selected while it walks
+// in in front of him.
+const PASS_ON = 0.15;
+
+// When this photo takes the selection and when it hands it on. The last
+// photo of an act keeps it.
+const selectionOf = (feature: number) => {
+  const list = actCues(actOf(feature));
+  const k = list.indexOf(feature);
+  const prev = list[k - 1];
+  const next = list[k + 1];
+  return {
+    from:
+      prev === undefined ? feature - LEAD : prev + (feature - prev) * PASS_ON,
+    until:
+      next === undefined
+        ? STORY_DURATION + 1
+        : feature + (next - feature) * PASS_ON,
+  };
+};
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -223,18 +245,13 @@ const momentPose = (m: Moment) => {
     // Snaps to full size as it passes RESIZE_AT, well in front of him.
     const resized = glide((RESIZE_AT - s) / RESIZE_SPAN);
     out.grow = 0.5 + 0.5 * resized;
-    const resizing =
-      smooth(RESIZE_AT + 0.45, RESIZE_AT, s) *
-      (1 -
-        smooth(
-          RESIZE_AT - RESIZE_SPAN - 0.1,
-          RESIZE_AT - RESIZE_SPAN - 0.8,
-          s,
-        ));
-    const spoken =
-      smooth(-APPEAR - 0.5, -APPEAR, t) *
-      (1 - smooth(SELECTED, SELECTED + 0.8, t));
-    out.sel = Math.max(resizing, spoken) * act;
+    // One selection at a time: it lets go just as the next photo takes
+    // hold, so there is never more than one frame.
+    const { from, until } = selectionOf(m.feature);
+    out.sel =
+      smooth(from, from + HANDOVER, sec) *
+      (1 - smooth(until - HANDOVER, until, sec)) *
+      act;
     // Guided sequence: the queue waits quietly in the dark; each photo
     // brightens as its turn approaches, so the eye is led along the stream
     // to the one being spoken.
