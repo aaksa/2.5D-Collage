@@ -102,13 +102,13 @@ const conveyors: Partial<Record<1 | 2, (sec: number) => number>> = {};
 // his face.
 const TIMING = {
   1: { first: 0.9, starts: 0.9, pace: 1.15 },
-  2: { first: 28.5, starts: 29.6, pace: 1.16 },
+  2: { first: 28.5, starts: 32.2, pace: 1.17 },
 };
 // Act II opens with its queue still down the path, its first photo this
 // far ahead of him, so it arrives from the front like the paving. The
-// queue glides in and settles to its pace by the time the first photo
-// reaches him.
-const RUN_UP = { at: ACT_TWO - 0.2, ahead: 10 };
+// run-up (7.5 units in 5.8 s) moves at the queue's own pace, about 1.3
+// units a second, so the entrance is as unhurried as the rest.
+const RUN_UP = { at: ACT_TWO - 0.2, ahead: 7.5 };
 const actOf = (sec: number) => (sec < BLACKOUT ? 1 : 2);
 const paced = (cue: number) => {
   const { first, starts, pace } = TIMING[actOf(cue)];
@@ -224,7 +224,7 @@ const momentPose = (m: Moment) => {
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
         : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec) *
-          (1 - smooth(FACE_AT + 0.6, FACE_AT + 2.2, sec));
+          (1 - smooth(FACE_AT + 1.4, THIEF_LINE_AT - 0.4, sec)); // gone before the closing line
     const pasted = smooth(FAR, FAR - 12, s); // a long, slow fade in
     const gone = smooth(-5.5, -3, s); // lingers, then fades out of frame
 
