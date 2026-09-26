@@ -70,21 +70,81 @@ const STREAM = {
 };
 // Distance over which the stream runs from beside him to its far end.
 const STREAM_REACH = 32;
-// The stream opens out very gently with distance: a photo's pace rises
-// smoothly the further ahead it is (twice his pace EASE_OUT seconds ahead),
-// which perspective turns into an even glide on screen.
-const EASE_OUT = 10;
 const ROWS = { low: STREAM, high: STREAM };
 
 // A photo first appears far down the path, like the far end of the paving,
 // and travels towards him. While it is still well ahead of him it is
 // selected and resized up to full size from its corner, so it arrives big;
 // it is selected again while its line is spoken, then travels on past him.
-const FAR = 40; // how far ahead it appears, in world units along the path
+const FAR = 48; // how far ahead it appears, in world units along the path
 const RESIZE_AT = 2.6; // world units ahead of him where it snaps to size
-const RESIZE_SPAN = 0.5; // world units of travel the resize takes: unhurried
-// The photos drift a little slower than the paving under his feet.
-const PHOTO_FLOW = 0.7;
+const RESIZE_SPAN = 1.0; // world units of travel the resize takes: unhurried
+
+// ---- The conveyor -----------------------------------------------------------
+//
+// The photos ride one conveyor: each keeps a fixed gap to its neighbours
+// (room to breathe), and the whole queue glides together at one shared
+// speed. That speed eases smoothly from line to line so every photo reaches
+// him on its cue. The break between the acts leaves a few empty slots, so
+// Act II arrives with its own run-up.
+const GAP = 3.4; // world units between neighbouring photos
+const BREAK_SLOTS = 4;
+const cues: number[] = [];
+let conveyor: ((sec: number) => number) | null = null;
+
+// Monotone cubic interpolation (Fritsch-Carlson): smooth, never overshoots,
+// so the queue never stops or backs up; straight lines beyond the ends.
+const monotone = (xs: number[], ys: number[]) => {
+  const n = xs.length;
+  const d = xs.slice(1).map((x, i) => (ys[i + 1] - ys[i]) / (x - xs[i]));
+  const m = xs.map((_, i) =>
+    i === 0 ? d[0] : i === n - 1 ? d[n - 2] : (d[i - 1] + d[i]) / 2,
+  );
+  for (let i = 0; i < n - 1; i++) {
+    const a = m[i] / d[i];
+    const b = m[i + 1] / d[i];
+    const h = a * a + b * b;
+    if (h > 9) {
+      const k = 3 / Math.sqrt(h);
+      m[i] = k * a * d[i];
+      m[i + 1] = k * b * d[i];
+    }
+  }
+  return (x: number) => {
+    if (x <= xs[0]) return ys[0] + m[0] * (x - xs[0]);
+    if (x >= xs[n - 1]) return ys[n - 1] + m[n - 1] * (x - xs[n - 1]);
+    let i = 0;
+    while (x > xs[i + 1]) i++;
+    const h = xs[i + 1] - xs[i];
+    const t = (x - xs[i]) / h;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    return (
+      (2 * t3 - 3 * t2 + 1) * ys[i] +
+      (t3 - 2 * t2 + t) * h * m[i] +
+      (-2 * t3 + 3 * t2) * ys[i + 1] +
+      (t3 - t2) * h * m[i + 1]
+    );
+  };
+};
+
+// Each cue's place on the conveyor, in world units.
+const slotOf = (feature: number) => {
+  const sorted = [...cues].sort((a, b) => a - b);
+  const k = sorted.indexOf(feature);
+  const breaks = sorted.slice(0, k + 1).filter((c) => c > BLACKOUT).length
+    ? BREAK_SLOTS
+    : 0;
+  return (k + breaks) * GAP;
+};
+
+const travelled = (sec: number) => {
+  if (!conveyor) {
+    const sorted = [...cues].sort((a, b) => a - b);
+    conveyor = monotone(sorted, sorted.map(slotOf));
+  }
+  return conveyor(sec);
+};
 const APPEAR = 0.55; // seconds before its moment it is selected again
 const SELECTED = 1.5; // seconds after its moment the selection clears
 
@@ -115,15 +175,9 @@ const glide = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 4);
 const momentPose = (m: Moment) => {
   const { lateral, height, farLateral, farHeight } = ROWS[m.row];
   return (sec: number, out: Pose): Pose => {
-    // Straight along the path. Photos join the stream early (well before the
-    // film begins for the first ones) so it reaches a long way back.
-    const ahead = Math.max(0, m.feature - sec);
-    const behind = Math.min(0, m.feature - sec);
-    const s =
-      FEATURE_S +
-      lane.speed *
-        PHOTO_FLOW *
-        (behind + ahead + (ahead * ahead) / (2 * EASE_OUT));
+    // Its distance ahead of him: its place on the conveyor minus how far
+    // the conveyor has travelled.
+    const s = FEATURE_S + slotOf(m.feature) - travelled(sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     // A straight line, like the paving: from far ahead above the path on
@@ -174,7 +228,7 @@ const momentPose = (m: Moment) => {
     // Guided sequence: the queue waits quietly in the dark; each photo
     // brightens as its turn approaches, so the eye is led along the stream
     // to the one being spoken.
-    const turn = 0.32 + 0.68 * smooth(-11, -3, t);
+    const turn = 0.32 + 0.68 * smooth(16, 5, s);
     out.o = pasted * gone * turn * (1 - sinking * 0.85) * act;
     out.damage = (m.damage ?? 0) * smooth(-1.0, 1.2, t);
     out.murk = (m.murk ?? 0) * smooth(-1.0, 1.4, t);
@@ -213,7 +267,10 @@ const at = (
   size = 1.6,
   tilt = 0,
   decay: Partial<Moment> = {},
-): Moment => ({ feature, row, size, tilt, ...decay });
+): Moment => {
+  cues.push(feature);
+  return { feature, row, size, tilt, ...decay };
+};
 
 // One generated image per line, in the order they are spoken.
 const scene = (file: string) => `story/${file}.jpg`;

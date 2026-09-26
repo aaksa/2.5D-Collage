@@ -11,13 +11,13 @@ weighted camera dollies, trucks and rolls past them. It runs 4 s at 1920×1080,
 `ThiefSpeaks` (54.65 s) tells the narration in `public/audio/0926.mp3` with
 its subtitles (`public/audio/0926.srt`, parsed at render time):
 
-- **The photo lane.** One image per line, in a single stream that reaches a
-  long way back down the path. Photos join it early (some before the film
-  begins) and fade in slowly; the stream opens out very gently with
-  distance, so the far queue glides evenly. The queue waits dimmed; each
-  photo brightens as its turn approaches, resizes up from its corner with a
-  blue selection frame a little ahead of him, is selected again while its
-  line is spoken, then lingers as it travels on past him.
+- **The photo lane.** One image per line, riding a single conveyor that
+  reaches far down the path. Every photo keeps a fixed gap to its
+  neighbours, and the whole queue glides together at one shared speed that
+  eases smoothly from line to line, so each photo reaches him on its cue.
+  The queue waits dimmed and brightens as it nears him; each photo resizes
+  up from its corner with a blue selection frame a little ahead of him, is
+  selected again while its line is spoken, then travels on past him.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
