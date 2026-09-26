@@ -266,7 +266,7 @@ export const ChapterMarks: React.FC<{
             style={{
               position: "absolute",
               right: 120,
-              top: 92,
+              top: 112, // clear of the browser bar
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-end",

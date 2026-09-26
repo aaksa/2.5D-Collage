@@ -21,6 +21,7 @@ import {
   Settings,
   createSceneState,
 } from "../components/SceneContext";
+import { BrowserChrome } from "../components/BrowserChrome";
 import { StoryScene } from "../components/StoryScene";
 import { YearCounter } from "../components/YearCounter";
 import {
@@ -247,6 +248,7 @@ export const ThiefSpeaks: React.FC = () => {
           />
         </>
       ) : null}
+      <BrowserChrome url="localhost:62" />
     </AbsoluteFill>
   );
 };

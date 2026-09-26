@@ -37,6 +37,9 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
 - **Typography.** Right-aligned captions: an index and a drawn rule arrive
   first, then the words rise out of a mask one by one, with the emphasised
   words landing last in an italic serif. Chapter marks guide the two acts.
+- **Browser bar.** A compact browser toolbar across the top of frame
+  (`components/BrowserChrome.tsx`) shows `localhost:62` in its address
+  field for the whole film.
 - **The walk** loops seamlessly: the matching poses in the clip are found
   automatically and the wrap is blended.
 
