@@ -88,19 +88,25 @@ const RESIZE_SPAN = 1.6; // world units of travel the resize takes: unhurried
 // speed. That speed eases smoothly from line to line so every photo reaches
 // him on its cue. Each act has its own queue, so Act I keeps drifting
 // gently through the year counter instead of rushing on towards Act II.
-const GAP = 3.4; // world units between neighbouring photos
+// World units between neighbouring photos. Act II sits a little closer,
+// so its queue walks in more slowly. (Kept above the length of a resize,
+// so two photos never resize at once.)
+const GAP = { 1: 3.4, 2: 3.0 };
 const cues: number[] = [];
 const conveyors: Partial<Record<1 | 2, (sec: number) => number>> = {};
 
-// The photos play a little slower than the narration: each act's queue is
+// The photos play slower than the narration: each act's queue is
 // stretched from its first cue, so Act I runs on until the counter lands on
-// 2025 and its last photo arrives with it.
-const FIRST_CUE = { 1: 0.9, 2: 28.5 };
-const PACE = { 1: 1.15, 2: 1.1 };
+// 2025 and its last photo arrives with it. Act II starts a little earlier,
+// straight out of the blackout, and runs on until just before the face.
+const TIMING = {
+  1: { first: 0.9, starts: 0.9, pace: 1.15 },
+  2: { first: 28.5, starts: 27.7, pace: 1.22 },
+};
 const actOf = (sec: number) => (sec < BLACKOUT ? 1 : 2);
 const paced = (cue: number) => {
-  const a = actOf(cue);
-  return FIRST_CUE[a] + (cue - FIRST_CUE[a]) * PACE[a];
+  const { first, starts, pace } = TIMING[actOf(cue)];
+  return starts + (cue - first) * pace;
 };
 
 // Monotone cubic interpolation (Fritsch-Carlson): smooth, never overshoots,
@@ -144,7 +150,7 @@ const actCues = (a: 1 | 2) =>
 
 // Each cue's place on its act's conveyor, in world units.
 const slotOf = (feature: number) =>
-  actCues(actOf(feature)).indexOf(feature) * GAP;
+  actCues(actOf(feature)).indexOf(feature) * GAP[actOf(feature)];
 
 // How far the conveyor carrying this cue has travelled by `sec`.
 const travelled = (feature: number, sec: number) => {
