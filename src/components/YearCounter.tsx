@@ -47,7 +47,7 @@ export const YearCounter: React.FC<{
         style={{
           position: "absolute",
           right: 120,
-          top: 210,
+          top: 230, // clear of the chapter mark under the browser bar
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",
