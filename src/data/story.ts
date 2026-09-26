@@ -73,24 +73,35 @@ const STREAM_REACH = 32;
 const ROWS = { low: STREAM, high: STREAM };
 
 // A photo first appears far down the path, like the far end of the paving,
-// and travels towards him. While it is still well ahead of him it is
-// selected and resized up to full size from its corner, so it arrives big;
-// it is selected again while its line is spoken, then travels on past him.
+// and travels towards him. Once it is next in line, right in front of him,
+// it is selected and resized up to full size from its corner, so it is
+// already big while it walks in; it is selected again while its line is
+// spoken, then travels on past him.
 const FAR = 48; // how far ahead it appears, in world units along the path
-const RESIZE_AT = 2.6; // world units ahead of him where it snaps to size
-const RESIZE_SPAN = 1.0; // world units of travel the resize takes: unhurried
+const RESIZE_AT = 6.2; // world units ahead of him where it grows to size
+const RESIZE_SPAN = 1.6; // world units of travel the resize takes: unhurried
 
 // ---- The conveyor -----------------------------------------------------------
 //
-// The photos ride one conveyor: each keeps a fixed gap to its neighbours
+// The photos ride a conveyor: each keeps a fixed gap to its neighbours
 // (room to breathe), and the whole queue glides together at one shared
 // speed. That speed eases smoothly from line to line so every photo reaches
-// him on its cue. The break between the acts leaves a few empty slots, so
-// Act II arrives with its own run-up.
+// him on its cue. Each act has its own queue, so Act I keeps drifting
+// gently through the year counter instead of rushing on towards Act II.
 const GAP = 3.4; // world units between neighbouring photos
-const BREAK_SLOTS = 4;
 const cues: number[] = [];
-let conveyor: ((sec: number) => number) | null = null;
+const conveyors: Partial<Record<1 | 2, (sec: number) => number>> = {};
+
+// The photos play a little slower than the narration: each act's queue is
+// stretched from its first cue, so Act I runs on until the counter lands on
+// 2025 and its last photo arrives with it.
+const FIRST_CUE = { 1: 0.9, 2: 28.5 };
+const PACE = { 1: 1.15, 2: 1.1 };
+const actOf = (sec: number) => (sec < BLACKOUT ? 1 : 2);
+const paced = (cue: number) => {
+  const a = actOf(cue);
+  return FIRST_CUE[a] + (cue - FIRST_CUE[a]) * PACE[a];
+};
 
 // Monotone cubic interpolation (Fritsch-Carlson): smooth, never overshoots,
 // so the queue never stops or backs up; straight lines beyond the ends.
@@ -128,25 +139,24 @@ const monotone = (xs: number[], ys: number[]) => {
   };
 };
 
-// Each cue's place on the conveyor, in world units.
-const slotOf = (feature: number) => {
-  const sorted = [...cues].sort((a, b) => a - b);
-  const k = sorted.indexOf(feature);
-  const breaks = sorted.slice(0, k + 1).filter((c) => c > BLACKOUT).length
-    ? BREAK_SLOTS
-    : 0;
-  return (k + breaks) * GAP;
-};
+const actCues = (a: 1 | 2) =>
+  cues.filter((c) => actOf(c) === a).sort((x, y) => x - y);
 
-const travelled = (sec: number) => {
-  if (!conveyor) {
-    const sorted = [...cues].sort((a, b) => a - b);
-    conveyor = monotone(sorted, sorted.map(slotOf));
+// Each cue's place on its act's conveyor, in world units.
+const slotOf = (feature: number) =>
+  actCues(actOf(feature)).indexOf(feature) * GAP;
+
+// How far the conveyor carrying this cue has travelled by `sec`.
+const travelled = (feature: number, sec: number) => {
+  const a = actOf(feature);
+  if (!conveyors[a]) {
+    const sorted = actCues(a);
+    conveyors[a] = monotone(sorted, sorted.map(slotOf));
   }
-  return conveyor(sec);
+  return conveyors[a](sec);
 };
 const APPEAR = 0.55; // seconds before its moment it is selected again
-const SELECTED = 1.5; // seconds after its moment the selection clears
+const SELECTED = 2.0; // seconds after its moment the selection clears
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -177,7 +187,7 @@ const momentPose = (m: Moment) => {
   return (sec: number, out: Pose): Pose => {
     // Its distance ahead of him: its place on the conveyor minus how far
     // the conveyor has travelled.
-    const s = FEATURE_S + slotOf(m.feature) - travelled(sec);
+    const s = FEATURE_S + slotOf(m.feature) - travelled(m.feature, sec);
     const t = sec - m.feature;
     const sinking = m.sink ? smooth(0.2, 3.4, t) : 0;
     // A straight line, like the paving: from far ahead above the path on
@@ -268,8 +278,9 @@ const at = (
   tilt = 0,
   decay: Partial<Moment> = {},
 ): Moment => {
-  cues.push(feature);
-  return { feature, row, size, tilt, ...decay };
+  const cue = paced(feature);
+  cues.push(cue);
+  return { feature: cue, row, size, tilt, ...decay };
 };
 
 // One generated image per line, in the order they are spoken.

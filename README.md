@@ -16,8 +16,11 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
   neighbours, and the whole queue glides together at one shared speed that
   eases smoothly from line to line, so each photo reaches him on its cue.
   The queue waits dimmed and brightens as it nears him; each photo resizes
-  up from its corner with a blue selection frame a little ahead of him, is
-  selected again while its line is spoken, then travels on past him.
+  up from its corner with a blue selection frame once it is next in line,
+  so it is already big in front of him, is selected again while its line is
+  spoken, then travels on past him. The photos play a little slower than
+  the narration (Act I 15%, Act II 10%), so Act I runs on through the year
+  counter and its last photo lands as it reaches 2025.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
