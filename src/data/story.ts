@@ -97,12 +97,18 @@ const conveyors: Partial<Record<1 | 2, (sec: number) => number>> = {};
 
 // The photos play slower than the narration: each act's queue is
 // stretched from its first cue, so Act I runs on until the counter lands on
-// 2025 and its last photo arrives with it. Act II starts a little earlier,
-// straight out of the blackout, and runs on until just before the face.
+// 2025 and its last photo arrives with it. Act II's queue first walks in
+// from the front out of the blackout, and runs on into the swing round to
+// his face.
 const TIMING = {
   1: { first: 0.9, starts: 0.9, pace: 1.15 },
-  2: { first: 28.5, starts: 27.7, pace: 1.22 },
+  2: { first: 28.5, starts: 29.6, pace: 1.16 },
 };
+// Act II opens with its queue still down the path, its first photo this
+// far ahead of him, so it arrives from the front like the paving. The
+// queue glides in and settles to its pace by the time the first photo
+// reaches him.
+const RUN_UP = { at: ACT_TWO - 0.2, ahead: 10 };
 const actOf = (sec: number) => (sec < BLACKOUT ? 1 : 2);
 const paced = (cue: number) => {
   const { first, starts, pace } = TIMING[actOf(cue)];
@@ -157,7 +163,11 @@ const travelled = (feature: number, sec: number) => {
   const a = actOf(feature);
   if (!conveyors[a]) {
     const sorted = actCues(a);
-    conveyors[a] = monotone(sorted, sorted.map(slotOf));
+    const slots = sorted.map(slotOf);
+    conveyors[a] =
+      a === 2
+        ? monotone([RUN_UP.at, ...sorted], [slots[0] - RUN_UP.ahead, ...slots])
+        : monotone(sorted, slots);
   }
   return conveyors[a](sec);
 };
@@ -213,7 +223,8 @@ const momentPose = (m: Moment) => {
     const act =
       m.feature < BLACKOUT
         ? 1 - smooth(BLACKOUT - 0.6, BLACKOUT + 0.1, sec)
-        : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec);
+        : smooth(ACT_TWO - 0.2, ACT_TWO + 1.2, sec) *
+          (1 - smooth(FACE_AT + 0.6, FACE_AT + 2.2, sec));
     const pasted = smooth(FAR, FAR - 12, s); // a long, slow fade in
     const gone = smooth(-5.5, -3, s); // lingers, then fades out of frame
 

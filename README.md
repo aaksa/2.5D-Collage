@@ -20,9 +20,11 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
   of him, then travels on past him. The blue selection frame shows only
   while a photo is resizing, so only one photo carries it at a time. The photos play a little slower than
   the narration, so Act I (15% slower) runs on through the year counter
-  and its last photo lands as it reaches 2025. Act II starts straight out
-  of the blackout, runs 22% slower with its photos a little closer
-  together, and ends just before the swing round to his face.
+  and its last photo lands as it reaches 2025. Act II opens with its
+  queue still down the path: it walks in from the front out of the
+  blackout, settles to a pace 16% slower than the narration with its
+  photos a little closer together, and fades as the camera swings round
+  to his face.
 - **Act I (0-26 s):** what the colonisers left, ending on a slow pull back
   for "Indonesia merdeka 80 tahun" while an odometer rolls the years from
   1945 to 2025.
