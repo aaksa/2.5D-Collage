@@ -30,8 +30,8 @@ its subtitles (`public/audio/0926.srt`, parsed at render time):
 - **Act II (26.5-44 s):** what came after: bare hills, a muddied river, a
   ledger page of debt, crowded blocks, a broken road, a sinking bridge, while
   the path itself breaks up under him.
-- **Ending (45 s-):** the camera swings round to the rat's face for "Now the
-  Thief Speaks Our Tongue".
+- **Ending (45 s-):** the camera swings round to the rat's face for "So tell
+  me… who’s the colonizer now?".
 - **Typography.** Right-aligned captions: an index and a drawn rule arrive
   first, then the words rise out of a mask one by one, with the emphasised
   words landing last in an italic serif. Chapter marks guide the two acts.

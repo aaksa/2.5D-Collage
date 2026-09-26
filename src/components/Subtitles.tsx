@@ -322,7 +322,8 @@ export const ClosingLine: React.FC<{
   at: number; // seconds
   fadeOutAt: number;
   accent: string;
-}> = ({ text, frame, fps, at, fadeOutAt, accent }) => {
+  accentWord?: string; // set in the accent colour
+}> = ({ text, frame, fps, at, fadeOutAt, accent, accentWord }) => {
   const sec = frame / fps;
   if (sec < at - 0.2) return null;
   const inAt = at * fps;
@@ -358,7 +359,11 @@ export const ClosingLine: React.FC<{
               outAt={outAt}
               duration={44}
               style={
-                word.toLowerCase() === "thief" ? { color: accent } : undefined
+                accentWord &&
+                word.toLowerCase().replace(/[^\p{L}]/gu, "") ===
+                  accentWord.toLowerCase()
+                  ? { color: accent }
+                  : undefined
               }
             >
               {word}

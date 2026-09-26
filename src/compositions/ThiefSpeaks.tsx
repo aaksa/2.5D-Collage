@@ -237,12 +237,13 @@ export const ThiefSpeaks: React.FC = () => {
             hideAfter={FACE_AT + 0.5}
           />
           <ClosingLine
-            text="Now the Thief Speaks Our Tongue"
+            text="So tell me… who’s the colonizer now?"
             frame={frame}
             fps={fps}
             at={THIEF_LINE_AT}
             fadeOutAt={STORY_DURATION - 1.0}
             accent="#ff4b3e"
+            accentWord="colonizer"
           />
         </>
       ) : null}
