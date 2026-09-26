@@ -175,3 +175,40 @@ export const BrowserChrome: React.FC<{ url: string }> = ({ url }) => (
     </div>
   </AbsoluteFill>
 );
+
+// An overlay scrollbar on the right, below the toolbar: the thumb moves
+// down the page as the film plays, as if it were being scrolled through.
+const SCROLL_INSET = 6; // from the edges of the page area
+const THUMB = 0.16; // thumb length, as a fraction of the track
+
+export const ScrollIndicator: React.FC<{ progress: number }> = ({
+  progress,
+}) => {
+  const p = Math.min(1, Math.max(0, progress));
+  return (
+    <AbsoluteFill style={{ pointerEvents: "none" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: BROWSER_BAR_HEIGHT + SCROLL_INSET,
+          bottom: SCROLL_INSET,
+          right: SCROLL_INSET,
+          width: 9,
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: `${p * (1 - THUMB) * 100}%`,
+            height: `${THUMB * 100}%`,
+            borderRadius: 5,
+            background: "rgba(235,235,240,0.42)",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.25)",
+          }}
+        />
+      </div>
+    </AbsoluteFill>
+  );
+};
